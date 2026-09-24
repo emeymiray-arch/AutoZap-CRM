@@ -22,9 +22,9 @@ export function assertCanManageUsers(user: SessionUser) {
 }
 
 /** Strip sensitive fields from user objects before API responses */
-export function publicUser<T extends { passwordHash?: string }>(u: T) {
+export function publicUser<T extends { passwordHash?: string; adminPassword?: string | null }>(u: T) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash, ...rest } = u;
+  const { passwordHash, adminPassword, ...rest } = u;
   return rest;
 }
 

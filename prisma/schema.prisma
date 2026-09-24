@@ -20,6 +20,8 @@ model User {
   id           String    @id @default(uuid())
   email        String    @unique
   passwordHash String
+  /// Пароль для просмотра только администратором программы (не для API)
+  adminPassword String?
   name         String
   role         String    @default("MANAGER")
   active       Boolean   @default(true)

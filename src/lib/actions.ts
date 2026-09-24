@@ -821,6 +821,7 @@ async function createUserFromForm(formData: FormData) {
       name,
       email,
       passwordHash,
+      adminPassword: password,
       role: roleRaw,
       active: true,
     },
