@@ -9,27 +9,41 @@ import { Input } from "@/components/ui/Form";
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [email, setEmail] = useState("admin@autozap.local");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const showDemoHint = process.env.NODE_ENV === "development";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) {
-      setError("Неверный email или пароль");
-      return;
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      if (res?.error) {
+        setError(
+          res.error === "Configuration"
+            ? "Ошибка конфигурации входа на сервере. Попробуйте позже."
+            : "Неверный email или пароль",
+        );
+        return;
+      }
+      if (!res?.ok) {
+        setError("Не удалось войти. Проверьте email и пароль.");
+        return;
+      }
+      router.push(params.get("callbackUrl") || "/dashboard");
+      router.refresh();
+    } catch {
+      setError("Сервер входа недоступен. Обновите страницу и попробуйте снова.");
+    } finally {
+      setLoading(false);
     }
-    router.push(params.get("callbackUrl") || "/dashboard");
-    router.refresh();
   }
 
   return (
@@ -38,6 +52,7 @@ function LoginForm() {
         label="Email"
         type="email"
         required
+        autoComplete="username"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
@@ -45,6 +60,7 @@ function LoginForm() {
         label="Пароль"
         type="password"
         required
+        autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
@@ -52,9 +68,11 @@ function LoginForm() {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Вход…" : "Войти"}
       </Button>
-      <p className="text-center text-xs text-slate-500">
-        Демо: admin@autozap.local / admin123
-      </p>
+      {showDemoHint && (
+        <p className="text-center text-xs text-slate-500">
+          Dev: admin@autozap.local / admin123
+        </p>
+      )}
     </form>
   );
 }
