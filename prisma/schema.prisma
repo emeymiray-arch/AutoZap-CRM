@@ -1,0 +1,462 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
+
+
+
+
+
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         String    @default("MANAGER")
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  archivedAt   DateTime?
+
+  leadsResponsible     Lead[]         @relation("LeadResponsible")
+  companiesResponsible Company[]      @relation("CompanyResponsible")
+  contactsResponsible  Contact[]      @relation("ContactResponsible")
+  dealsResponsible     Deal[]         @relation("DealResponsible")
+  partnersResponsible  Partner[]      @relation("PartnerResponsible")
+  catalogsResponsible  Catalog[]      @relation("CatalogResponsible")
+  storesResponsible    Store[]        @relation("StoreResponsible")
+  tasksResponsible     Task[]         @relation("TaskResponsible")
+  tasksCreated         Task[]         @relation("TaskCreator")
+  activities           Activity[]
+  comments             Comment[]
+  statusHistory        StatusHistory[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  savedFilters         SavedFilter[]
+  attachments          Attachment[]
+}
+
+model Company {
+  id              String    @id @default(uuid())
+  name            String
+  legalForm       String?
+  inn             String?
+  city            String?
+  region          String?
+  address         String?
+  phone           String?
+  email           String?
+  website         String?
+  companyType     String?
+  skuCount        Int?
+  categories      String?
+  status          String    @default("ACTIVE")
+  notes           String?
+  responsibleId   String?
+  lastContactAt   DateTime?
+  nextContactAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  archivedAt      DateTime?
+  createdById     String?
+
+  responsible User?     @relation("CompanyResponsible", fields: [responsibleId], references: [id])
+  contacts    Contact[]
+  leads       Lead[]
+  deals       Deal[]
+  partners    Partner[]
+  catalogs    Catalog[]
+  stores      Store[]
+  tasks       Task[]
+  activities  Activity[]
+  comments    Comment[]
+
+  @@index([name])
+  @@index([inn])
+  @@index([phone])
+  @@index([email])
+  @@index([archivedAt])
+  @@index([responsibleId])
+}
+
+model Contact {
+  id            String    @id @default(uuid())
+  firstName     String
+  lastName      String?
+  position      String?
+  phone         String?
+  email         String?
+  telegram      String?
+  whatsapp      String?
+  companyId     String?
+  responsibleId String?
+  comment       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+  createdById   String?
+
+  company     Company? @relation(fields: [companyId], references: [id])
+  responsible User?    @relation("ContactResponsible", fields: [responsibleId], references: [id])
+  leads       Lead[]
+  deals       Deal[]
+  tasks       Task[]
+  activities  Activity[]
+
+  @@index([phone])
+  @@index([email])
+  @@index([companyId])
+  @@index([archivedAt])
+}
+
+model Lead {
+  id              String     @id @default(uuid())
+  title           String
+  companyId       String?
+  contactId       String?
+  phone           String?
+  email           String?
+  city            String?
+  region          String?
+  source          String?
+  website         String?
+  avito           String?
+  wildberries     String?
+  ozon            String?
+  businessType    String?
+  assortment      String?
+  responsibleId   String?
+  status          String     @default("NEW")
+  lastContactAt   DateTime?
+  nextContactAt   DateTime?
+  comment         String?
+  rejectReason    String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  archivedAt      DateTime?
+  createdById     String?
+  convertedPartnerId String?
+
+  company     Company? @relation(fields: [companyId], references: [id])
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  responsible User?    @relation("LeadResponsible", fields: [responsibleId], references: [id])
+  deals       Deal[]
+  tasks       Task[]
+  activities  Activity[]
+  partner     Partner?
+
+  @@index([status])
+  @@index([responsibleId])
+  @@index([source])
+  @@index([region])
+  @@index([archivedAt])
+  @@index([createdAt])
+}
+
+model Deal {
+  id            String    @id @default(uuid())
+  title         String
+  companyId     String?
+  contactId     String?
+  leadId        String?
+  responsibleId String?
+  stage         String    @default("NEW")
+  source        String?
+  amount        Float?
+  nextStep      String?
+  deadline      DateTime?
+  comment       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+  createdById   String?
+
+  company     Company? @relation(fields: [companyId], references: [id])
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  lead        Lead?    @relation(fields: [leadId], references: [id])
+  responsible User?    @relation("DealResponsible", fields: [responsibleId], references: [id])
+  tasks       Task[]
+  activities  Activity[]
+
+  @@index([stage])
+  @@index([responsibleId])
+  @@index([archivedAt])
+  @@index([deadline])
+}
+
+model Partner {
+  id              String         @id @default(uuid())
+  name            String
+  companyId       String?
+  leadId          String?        @unique
+  responsibleId   String?
+  status          String         @default("NEW")
+  region          String?
+  comment         String?
+  registeredAt    DateTime?
+  activatedAt     DateTime?
+  lastContactAt   DateTime?
+  nextContactAt   DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  archivedAt      DateTime?
+  createdById     String?
+
+  company     Company?  @relation(fields: [companyId], references: [id])
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+  responsible User?     @relation("PartnerResponsible", fields: [responsibleId], references: [id])
+  catalogs    Catalog[]
+  stores      Store[]
+  tasks       Task[]
+  activities  Activity[]
+
+  @@index([status])
+  @@index([responsibleId])
+  @@index([archivedAt])
+}
+
+model Catalog {
+  id            String        @id @default(uuid())
+  name          String
+  partnerId     String?
+  companyId     String?
+  status        String        @default("EXPECTED")
+  skuCount      Int?
+  receivedAt    DateTime?
+  responsibleId String?
+  comment       String?
+  fileName      String?
+  filePath      String?
+  fileMime      String?
+  rowCount      Int?
+  validCount    Int?
+  errorCount    Int?
+  missingFields String?
+  duplicateSkus String?
+  noPriceCount  Int?
+  noPhotoCount  Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  archivedAt    DateTime?
+  createdById   String?
+
+  partner     Partner? @relation(fields: [partnerId], references: [id])
+  company     Company? @relation(fields: [companyId], references: [id])
+  responsible User?    @relation("CatalogResponsible", fields: [responsibleId], references: [id])
+  activities  Activity[]
+
+  @@index([status])
+  @@index([partnerId])
+  @@index([archivedAt])
+}
+
+model Store {
+  id            String      @id @default(uuid())
+  name          String
+  companyId     String?
+  partnerId     String?
+  region        String?
+  status        String      @default("CREATING")
+  productCount  Int?
+  registeredAt  DateTime?
+  publishedAt   DateTime?
+  activatedAt   DateTime?
+  responsibleId String?
+  storeUrl      String?
+  comment       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  archivedAt    DateTime?
+  createdById   String?
+
+  company     Company? @relation(fields: [companyId], references: [id])
+  partner     Partner? @relation(fields: [partnerId], references: [id])
+  responsible User?    @relation("StoreResponsible", fields: [responsibleId], references: [id])
+  activities  Activity[]
+
+  @@index([status])
+  @@index([partnerId])
+  @@index([archivedAt])
+}
+
+model Task {
+  id            String       @id @default(uuid())
+  title         String
+  description   String?
+  responsibleId String?
+  creatorId     String?
+  companyId     String?
+  contactId     String?
+  leadId        String?
+  dealId        String?
+  partnerId     String?
+  deadline      DateTime?
+  priority      String       @default("MEDIUM")
+  status        String       @default("NEW")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  archivedAt    DateTime?
+
+  responsible User?    @relation("TaskResponsible", fields: [responsibleId], references: [id])
+  creator     User?    @relation("TaskCreator", fields: [creatorId], references: [id])
+  company     Company? @relation(fields: [companyId], references: [id])
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  lead        Lead?    @relation(fields: [leadId], references: [id])
+  deal        Deal?    @relation(fields: [dealId], references: [id])
+  partner     Partner? @relation(fields: [partnerId], references: [id])
+  activities  Activity[]
+
+  @@index([status])
+  @@index([responsibleId])
+  @@index([deadline])
+  @@index([archivedAt])
+}
+
+model Activity {
+  id         String       @id @default(uuid())
+  type       String
+  authorId   String?
+  comment    String?
+  companyId  String?
+  contactId  String?
+  leadId     String?
+  dealId     String?
+  partnerId  String?
+  catalogId  String?
+  storeId    String?
+  taskId     String?
+  meta       String?
+  createdAt  DateTime     @default(now())
+
+  author  User?    @relation(fields: [authorId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
+  contact Contact? @relation(fields: [contactId], references: [id])
+  lead    Lead?    @relation(fields: [leadId], references: [id])
+  deal    Deal?    @relation(fields: [dealId], references: [id])
+  partner Partner? @relation(fields: [partnerId], references: [id])
+  catalog Catalog? @relation(fields: [catalogId], references: [id])
+  store   Store?   @relation(fields: [storeId], references: [id])
+  task    Task?    @relation(fields: [taskId], references: [id])
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([companyId])
+  @@index([leadId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  body      String
+  authorId  String?
+  companyId String?
+  entityType String
+  entityId  String
+  createdAt DateTime @default(now())
+
+  author  User?    @relation(fields: [authorId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  fileName   String
+  filePath   String
+  fileMime   String?
+  fileSize   Int?
+  entityType String
+  entityId   String
+  uploadedById String?
+  createdAt  DateTime @default(now())
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+model StatusHistory {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  field      String   @default("status")
+  oldValue   String?
+  newValue   String?
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  entityType String
+  entityId   String
+  action     String
+  oldValue   String?
+  newValue   String?
+  summary    String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, readAt])
+}
+
+model SavedFilter {
+  id         String   @id @default(uuid())
+  userId     String
+  name       String
+  entityType String
+  query      String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, entityType])
+}
+
+/// Maps AutoZap entity IDs to external systems (e.g. Bitrix24) without coupling core domain
+model ExternalIdMap {
+  id             String   @id @default(uuid())
+  entityType     String
+  localId        String
+  externalSystem String   @default("bitrix24")
+  externalId     String
+  meta           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([entityType, localId, externalSystem])
+  @@unique([externalSystem, entityType, externalId])
+  @@index([localId])
+}
