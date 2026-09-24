@@ -92,6 +92,10 @@ export default async function CompaniesPage({
           { key: "name", header: "Название", render: (r) => r.name },
           { key: "inn", header: "ИНН", render: (r) => r.inn || "—" },
           { key: "city", header: "Город", render: (r) => r.city || "—" },
+          { key: "region", header: "Регион", render: (r) => r.region || "—" },
+          { key: "production", header: "Производство", render: (r) => r.productionCities || "—" },
+          { key: "warehouses", header: "Склады", render: (r) => r.warehouseCities || "—" },
+          { key: "stores", header: "Магазины", render: (r) => r.storeCities || "—" },
           {
             key: "status",
             header: "Статус",

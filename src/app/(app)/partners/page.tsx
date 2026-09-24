@@ -79,7 +79,29 @@ export default async function PartnersPage({
         columns={[
           { key: "name", header: "Название", render: (r) => r.name },
           { key: "company", header: "Компания", render: (r) => r.company?.name || "—" },
-          { key: "status", header: "Статус", render: (r) => <Badge status={r.status}>{PARTNER_STATUS_LABELS[r.status] || r.status}</Badge> },
+          { key: "region", header: "Регион", render: (r) => r.region || r.company?.region || "—" },
+          {
+            key: "production",
+            header: "Производство",
+            render: (r) => r.company?.productionCities || "—",
+          },
+          {
+            key: "warehouses",
+            header: "Склады",
+            render: (r) => r.company?.warehouseCities || "—",
+          },
+          {
+            key: "stores",
+            header: "Магазины",
+            render: (r) => r.company?.storeCities || "—",
+          },
+          {
+            key: "status",
+            header: "Статус",
+            render: (r) => (
+              <Badge status={r.status}>{PARTNER_STATUS_LABELS[r.status] || r.status}</Badge>
+            ),
+          },
           { key: "resp", header: "Ответственный", render: (r) => r.responsible?.name || "—" },
           { key: "updated", header: "Изменён", render: (r) => formatDate(r.updatedAt) },
         ]}

@@ -46,13 +46,19 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
           <dl className="grid gap-3 sm:grid-cols-2 text-sm">
             {[
               ["Компания", partner.company?.name],
-              ["Регион", partner.region],
+              ["Регион", partner.region || partner.company?.region],
+              ["Склады", partner.company?.warehouseCities],
+              ["Производство", partner.company?.productionCities],
+              ["Магазины", partner.company?.storeCities],
               ["Ответственный", partner.responsible?.name],
               ["Регистрация", formatDateTime(partner.registeredAt)],
               ["Активация", formatDateTime(partner.activatedAt)],
               ["Следующий контакт", formatDateTime(partner.nextContactAt)],
             ].map(([k, v]) => (
-              <div key={String(k)}><dt className="text-xs text-slate-500">{k}</dt><dd className="font-medium">{v || "—"}</dd></div>
+              <div key={String(k)}>
+                <dt className="text-xs text-slate-500">{k}</dt>
+                <dd className="font-medium">{v || "—"}</dd>
+              </div>
             ))}
             <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Комментарий</dt><dd>{partner.comment || "—"}</dd></div>
           </dl>

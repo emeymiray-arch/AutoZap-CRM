@@ -83,6 +83,20 @@ async function resolveCompanyId(
   return company.id;
 }
 
+/** Обновляет склады/производство/магазины у связанной компании */
+async function syncCompanyLocations(companyId: string | null | undefined, formData: FormData) {
+  if (!companyId) return;
+  await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      warehouseCities: citiesFromForm(formData, "warehouseCities"),
+      productionCities: citiesFromForm(formData, "productionCities"),
+      storeCities: citiesFromForm(formData, "storeCities"),
+    },
+  });
+  revalidateEntity(["/crm/companies", `/crm/companies/${companyId}`]);
+}
+
 // ─── Companies ─────────────────────────────────────────────
 
 export async function createCompanyAction(formData: FormData): Promise<void> {
@@ -506,6 +520,7 @@ export async function createPartnerAction(formData: FormData) {
   };
   if (!data.name) throw new Error("Название обязательно");
   const partner = await prisma.partner.create({ data });
+  await syncCompanyLocations(partner.companyId, formData);
   await writeAudit({
     userId: user.id,
     entityType: "partner",
@@ -540,6 +555,7 @@ export async function updatePartnerAction(id: string, formData: FormData) {
     lastContactAt: date(formData, "lastContactAt"),
   };
   const after = await prisma.partner.update({ where: { id }, data });
+  await syncCompanyLocations(after.companyId, formData);
   await trackFieldChanges("partner", id, user, before as never, after as never);
   if (before.status !== newStatus) {
     await changeStatus({ entity: "partner", id, newStatus, user });
