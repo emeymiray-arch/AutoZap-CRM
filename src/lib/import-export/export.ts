@@ -6,33 +6,44 @@ import {
   mapDealToBitrix,
 } from "@/lib/integrations/bitrix24/mapper";
 import { rowsToCsv, rowsToWorkbook } from "@/lib/import-export/spreadsheet";
+import type { SessionUser } from "@/lib/permissions";
+import { scopeWhere } from "@/lib/list-query";
 
-export async function exportEntityRows(entity: string, bitrix = false) {
+export async function exportEntityRows(
+  entity: string,
+  bitrix = false,
+  user?: SessionUser
+) {
+  const scope = user ? scopeWhere(user) : {};
   switch (entity) {
     case "leads": {
-      const rows = await prisma.lead.findMany({ where: { archivedAt: null } });
+      const rows = await prisma.lead.findMany({ where: { archivedAt: null, ...scope } });
       return bitrix ? rows.map(mapLeadToBitrix) : rows;
     }
     case "companies": {
-      const rows = await prisma.company.findMany({ where: { archivedAt: null } });
+      const rows = await prisma.company.findMany({ where: { archivedAt: null, ...scope } });
       return bitrix ? rows.map(mapCompanyToBitrix) : rows;
     }
     case "contacts": {
-      const rows = await prisma.contact.findMany({ where: { archivedAt: null } });
+      const rows = await prisma.contact.findMany({ where: { archivedAt: null, ...scope } });
       return bitrix ? rows.map(mapContactToBitrix) : rows;
     }
     case "deals": {
-      const rows = await prisma.deal.findMany({ where: { archivedAt: null } });
+      const rows = await prisma.deal.findMany({ where: { archivedAt: null, ...scope } });
       return bitrix ? rows.map(mapDealToBitrix) : rows;
     }
     case "partners":
-      return prisma.partner.findMany({ where: { archivedAt: null } });
+      if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
+      return prisma.partner.findMany({ where: { archivedAt: null, ...scope } });
     case "stores":
-      return prisma.store.findMany({ where: { archivedAt: null } });
+      if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
+      return prisma.store.findMany({ where: { archivedAt: null, ...scope } });
     case "tasks":
-      return prisma.task.findMany({ where: { archivedAt: null } });
+      if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
+      return prisma.task.findMany({ where: { archivedAt: null, ...scope } });
     case "catalogs":
-      return prisma.catalog.findMany({ where: { archivedAt: null } });
+      if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
+      return prisma.catalog.findMany({ where: { archivedAt: null, ...scope } });
     default:
       throw new Error("Unknown entity");
   }

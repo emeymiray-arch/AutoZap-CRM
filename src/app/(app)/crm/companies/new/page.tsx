@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
-import { Input, Select, Textarea } from "@/components/ui/Form";
+import { Input, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createCompanyAction } from "@/lib/actions";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
