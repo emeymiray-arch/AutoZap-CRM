@@ -11,8 +11,6 @@ type Preview = {
   dupeCount?: number;
   errorCount?: number;
   errors?: string[];
-  news?: number[];
-  dupes?: number[];
   [key: string]: unknown;
 };
 
@@ -23,50 +21,31 @@ export function ImportForm({ entity }: { entity: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function runPreview(e: React.FormEvent) {
-    e.preventDefault();
-    if (!file) return;
-    setPending(true);
-    setError(null);
-    setResult(null);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("mode", "preview");
-      const res = await fetch(`/api/v1/import?entity=${encodeURIComponent(entity)}`, {
-        method: "POST",
-        body: fd,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Ошибка предпросмотра");
-        setPreview(null);
-      } else {
-        setPreview(data);
-      }
-    } catch {
-      setError("Сеть недоступна");
-    } finally {
-      setPending(false);
-    }
-  }
+  const listHref =
+    entity === "leads" || entity === "companies" || entity === "contacts" || entity === "deals"
+      ? `/crm/${entity}`
+      : `/${entity}`;
 
-  async function confirmImport() {
+  async function run(mode: "preview" | "commit") {
     if (!file) return;
     setPending(true);
     setError(null);
+    if (mode === "preview") setResult(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("mode", "confirm");
-      fd.append("onlyNew", "1");
-      const res = await fetch(`/api/v1/import?entity=${encodeURIComponent(entity)}`, {
-        method: "POST",
-        body: fd,
-      });
+      const res = await fetch(
+        `/api/v1/import?entity=${encodeURIComponent(entity)}&mode=${mode}`,
+        { method: "POST", body: fd }
+      );
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Ошибка импорта");
+        setError(data.error || "Ошибка");
+        if (mode === "preview") setPreview(null);
+        return;
+      }
+      if (mode === "preview") {
+        setPreview(data);
       } else {
         setResult(
           `Импорт завершён: создано ${data.created ?? 0}, пропущено дублей ${data.skippedDupes ?? 0}`
@@ -83,7 +62,13 @@ export function ImportForm({ entity }: { entity: string }) {
   return (
     <div className="space-y-4">
       <Card title="Файл">
-        <form onSubmit={runPreview} className="space-y-3">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void run("preview");
+          }}
+          className="space-y-3"
+        >
           <Input
             name="file"
             label="CSV / XLSX"
@@ -111,7 +96,7 @@ export function ImportForm({ entity }: { entity: string }) {
       {result && (
         <Card>
           <p className="text-sm text-emerald-800">{result}</p>
-          <Button href={`/crm/${entity}`} size="sm" className="mt-2">
+          <Button href={listHref} size="sm" className="mt-2">
             К списку
           </Button>
         </Card>
@@ -137,25 +122,21 @@ export function ImportForm({ entity }: { entity: string }) {
               <dd className="font-semibold text-rose-700">{preview.errorCount ?? "—"}</dd>
             </div>
           </dl>
-          <pre className="max-h-64 overflow-auto rounded-md bg-slate-50 p-3 text-xs text-slate-800">
-            {JSON.stringify(
-              {
-                new: preview.news,
-                dupes: preview.dupes,
-                errors: preview.errors,
-                newCount: preview.newCount,
-                dupeCount: preview.dupeCount,
-                errorCount: preview.errorCount,
-              },
-              null,
-              2
-            )}
-          </pre>
-          <div className="mt-3">
-            <Button type="button" size="sm" disabled={pending} onClick={confirmImport}>
-              {pending ? "Импорт…" : "Подтвердить импорт (только новые)"}
-            </Button>
-          </div>
+          {preview.errors && preview.errors.length > 0 && (
+            <ul className="mb-3 list-disc pl-5 text-sm text-rose-700">
+              {(preview.errors as string[]).slice(0, 20).map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            disabled={pending || !(preview.newCount && preview.newCount > 0)}
+            onClick={() => void run("commit")}
+          >
+            {pending ? "Импорт…" : "Импортировать (только новые)"}
+          </Button>
         </Card>
       )}
     </div>

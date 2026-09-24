@@ -1,26 +1,22 @@
 import { prisma } from "./db";
 import type { SessionUser } from "./permissions";
 import { canViewAll } from "./permissions";
+import { containsInsensitive } from "./access";
 
 export async function globalSearch(q: string, user: SessionUser, limit = 20) {
   const query = q.trim();
-  if (!query || query.length < 2) return { companies: [], contacts: [], leads: [], deals: [], partners: [], stores: [], tasks: [] };
+  if (!query || query.length < 2)
+    return { companies: [], contacts: [], leads: [], deals: [], partners: [], stores: [], tasks: [] };
 
   const scope = canViewAll(user.role) ? {} : { responsibleId: user.id };
-  const like = { contains: query };
+  const like = containsInsensitive(query);
 
   const [companies, contacts, leads, deals, partners, stores, tasks] = await Promise.all([
     prisma.company.findMany({
       where: {
         archivedAt: null,
         ...scope,
-        OR: [
-          { name: like },
-          { inn: like },
-          { phone: like },
-          { email: like },
-          { city: like },
-        ],
+        OR: [{ name: like }, { inn: like }, { phone: like }, { email: like }, { city: like }],
       },
       take: limit,
       orderBy: { updatedAt: "desc" },
@@ -29,12 +25,7 @@ export async function globalSearch(q: string, user: SessionUser, limit = 20) {
       where: {
         archivedAt: null,
         ...scope,
-        OR: [
-          { firstName: like },
-          { lastName: like },
-          { phone: like },
-          { email: like },
-        ],
+        OR: [{ firstName: like }, { lastName: like }, { phone: like }, { email: like }],
       },
       take: limit,
       include: { company: true },
@@ -44,12 +35,7 @@ export async function globalSearch(q: string, user: SessionUser, limit = 20) {
       where: {
         archivedAt: null,
         ...scope,
-        OR: [
-          { title: like },
-          { phone: like },
-          { email: like },
-          { city: like },
-        ],
+        OR: [{ title: like }, { phone: like }, { email: like }, { city: like }],
       },
       take: limit,
       orderBy: { updatedAt: "desc" },

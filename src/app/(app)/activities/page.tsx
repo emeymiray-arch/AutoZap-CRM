@@ -28,7 +28,7 @@ export default async function ActivitiesPage({
 
   const where: Prisma.ActivityWhereInput = {
     ...(type ? { type: type as never } : {}),
-    ...(sp.q ? { OR: [{ comment: { contains: sp.q } }] } : {}),
+    ...(sp.q ? { OR: [{ comment: { contains: sp.q, mode: "insensitive" as const } }] } : {}),
     ...(dateRange(sp.from, sp.to) ? { createdAt: dateRange(sp.from, sp.to) } : {}),
   };
 

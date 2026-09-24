@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { updateStoreAction } from "@/lib/actions";
 import { companiesForSelect, partnersForSelect, usersForSelect } from "@/lib/list-query";
 import { STORE_STATUS_LABELS } from "@/lib/labels";
+import { RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditStorePage({ params }: { params: Promise<{ id: string }> }) {
   await auth();
@@ -43,7 +44,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
               <option key={k} value={k}>{v}</option>
             ))}
           </Select>
-          <Input name="region" label="Регион" defaultValue={store.region || ""} />
+          <RegionSelect defaultValue={store.region} />
           <Input name="productCount" label="Кол-во товаров" type="number" defaultValue={store.productCount ?? ""} />
           <Input name="storeUrl" label="URL магазина" defaultValue={store.storeUrl || ""} />
           <Select name="responsibleId" label="Ответственный" defaultValue={store.responsibleId || ""}>

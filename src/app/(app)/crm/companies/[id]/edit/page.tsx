@@ -6,6 +6,7 @@ import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { updateCompanyAction } from "@/lib/actions";
 import { usersForSelect } from "@/lib/list-query";
+import { CitySelect, MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditCompanyPage({ params }: { params: Promise<{ id: string }> }) {
   await auth();
@@ -23,8 +24,18 @@ export default async function EditCompanyPage({ params }: { params: Promise<{ id
           <Input name="name" label="Название" required defaultValue={company.name} className="md:col-span-2" />
           <Input name="legalForm" label="Правовая форма" defaultValue={company.legalForm || ""} />
           <Input name="inn" label="ИНН" defaultValue={company.inn || ""} />
-          <Input name="city" label="Город" defaultValue={company.city || ""} />
-          <Input name="region" label="Регион" defaultValue={company.region || ""} />
+          <CitySelect defaultValue={company.city} />
+          <RegionSelect defaultValue={company.region} />
+          <MultiCityField
+            name="warehouseCities"
+            label="Склады (города)"
+            defaultValue={company.warehouseCities}
+          />
+          <MultiCityField
+            name="productionCities"
+            label="Производство (города)"
+            defaultValue={company.productionCities}
+          />
           <Input name="address" label="Адрес" defaultValue={company.address || ""} className="md:col-span-2" />
           <Input name="phone" label="Телефон" defaultValue={company.phone || ""} />
           <Input name="email" label="Email" defaultValue={company.email || ""} />
@@ -38,7 +49,9 @@ export default async function EditCompanyPage({ params }: { params: Promise<{ id
           </Select>
           <Select name="responsibleId" label="Ответственный" defaultValue={company.responsibleId || ""}>
             {users.map((u) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
             ))}
           </Select>
           <Textarea name="notes" label="Заметки" defaultValue={company.notes || ""} className="md:col-span-2" />

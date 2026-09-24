@@ -5,6 +5,7 @@ import { Input, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createCompanyAction } from "@/lib/actions";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
+import { CitySelect, MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 import Link from "next/link";
 
 export default async function NewCompanyPage({
@@ -52,8 +53,10 @@ export default async function NewCompanyPage({
           />
           <Input name="legalForm" label="Юридическая форма" />
           <Input name="inn" label="ИНН" />
-          <Input name="city" label="Город" />
-          <Input name="region" label="Регион" />
+          <CitySelect />
+          <RegionSelect />
+          <MultiCityField name="warehouseCities" label="Склады (города)" />
+          <MultiCityField name="productionCities" label="Производство (города)" />
           <Input name="address" label="Адрес" className="md:col-span-2" />
           <Input name="phone" label="Телефон" />
           <Input name="email" label="Email" type="email" />

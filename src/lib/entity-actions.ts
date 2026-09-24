@@ -2,6 +2,7 @@ import { prisma } from "./db";
 import { writeAudit, writeStatusHistory, logActivity } from "./audit";
 import { runAutomations } from "./automations";
 import { assertHardDelete, type SessionUser } from "./permissions";
+import { assertCanAccessRecord } from "./access";
 
 type EntityKey =
   | "company"
@@ -41,6 +42,7 @@ export async function archiveEntity(entity: EntityKey, id: string, user: Session
   const m = model(entity);
   const existing = await m.findUnique({ where: { id } });
   if (!existing) throw new Error("Не найдено");
+  assertCanAccessRecord(user, existing);
   if (existing.archivedAt) throw new Error("Уже в архиве");
 
   const updated = await m.update({
@@ -74,6 +76,7 @@ export async function restoreEntity(entity: EntityKey, id: string, user: Session
   const m = model(entity);
   const existing = await m.findUnique({ where: { id } });
   if (!existing) throw new Error("Не найдено");
+  assertCanAccessRecord(user, existing);
   if (!existing.archivedAt) throw new Error("Объект не в архиве");
 
   const updated = await m.update({
@@ -102,6 +105,7 @@ export async function hardDeleteEntity(entity: EntityKey, id: string, user: Sess
   const m = model(entity);
   const existing = await m.findUnique({ where: { id } });
   if (!existing) throw new Error("Не найдено");
+  assertCanAccessRecord(user, existing);
   if (!existing.archivedAt) throw new Error("Сначала архивируйте объект");
 
   await writeAudit({
@@ -131,6 +135,7 @@ export async function changeStatus(input: {
   const m = model(entity);
   const existing = await m.findUnique({ where: { id } });
   if (!existing) throw new Error("Не найдено");
+  assertCanAccessRecord(user, existing);
   if (existing.archivedAt) throw new Error("Объект в архиве");
 
   const oldStatus = existing[field] as string;
@@ -233,6 +238,9 @@ export async function trackFieldChanges(
       userId: user.id,
       responsibleId: (after.responsibleId as string) || null,
       companyId: (after.companyId as string) || null,
+      leadId: entity === "lead" ? id : ((after.leadId as string) || null),
+      dealId: entity === "deal" ? id : ((after.dealId as string) || null),
+      partnerId: entity === "partner" ? id : ((after.partnerId as string) || null),
     });
   }
 }

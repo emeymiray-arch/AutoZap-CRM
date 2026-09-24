@@ -1,11 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
-import { Input, Select, Textarea } from "@/components/ui/Form";
+import { Input, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createContactAction } from "@/lib/actions";
-import { companiesForSelect } from "@/lib/list-query";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
+import { CompanyField } from "@/components/crm/CompanyField";
 import Link from "next/link";
 
 export default async function NewContactPage({
@@ -15,7 +15,6 @@ export default async function NewContactPage({
 }) {
   await auth();
   const sp = await searchParams;
-  const companies = await companiesForSelect();
   const dupIds = sp.duplicateOf?.split(",").filter(Boolean) || [];
   const dups =
     dupIds.length > 0
@@ -45,14 +44,7 @@ export default async function NewContactPage({
           <Input name="firstName" label="Имя" required />
           <Input name="lastName" label="Фамилия" />
           <Input name="position" label="Должность" />
-          <Select name="companyId" label="Компания">
-            <option value="">—</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          <CompanyField />
           <Input name="phone" label="Телефон" />
           <Input name="email" label="Email" type="email" />
           <Input name="telegram" label="Telegram" />

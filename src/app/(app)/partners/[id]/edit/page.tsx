@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { updatePartnerAction } from "@/lib/actions";
 import { companiesForSelect, usersForSelect } from "@/lib/list-query";
 import { PARTNER_STATUS_LABELS } from "@/lib/labels";
+import { RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditPartnerPage({ params }: { params: Promise<{ id: string }> }) {
   await auth();
@@ -31,7 +32,7 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
           <Select name="status" label="Статус" defaultValue={partner.status}>
             {Object.entries(PARTNER_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </Select>
-          <Input name="region" label="Регион" defaultValue={partner.region || ""} />
+          <RegionSelect defaultValue={partner.region} />
           <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} className="md:col-span-2" />
           <div className="md:col-span-2"><Button type="submit">Сохранить</Button></div>
         </form>

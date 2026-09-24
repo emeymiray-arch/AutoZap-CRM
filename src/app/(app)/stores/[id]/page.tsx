@@ -12,6 +12,7 @@ import { STORE_STATUS_LABELS } from "@/lib/labels";
 import { canHardDelete } from "@/lib/permissions";
 import { updateStoreAction } from "@/lib/actions";
 import { companiesForSelect, partnersForSelect, usersForSelect } from "@/lib/list-query";
+import { RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function StoreDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -40,7 +41,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
             id={store.id}
             archived={store.archivedAt}
             canDelete={canHardDelete(session.user.role)}
-            editHref={`/stores/${id}`}
+            editHref={`/stores/${id}/edit`}
             restoreTo={`/stores/${id}`}
           />
         }
@@ -66,7 +67,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
                 </option>
               ))}
             </Select>
-            <Input name="region" label="Регион" defaultValue={store.region || ""} />
+            <RegionSelect defaultValue={store.region} />
             <Select name="status" label="Статус" defaultValue={store.status}>
               {Object.entries(STORE_STATUS_LABELS).map(([k, v]) => (
                 <option key={k} value={k}>

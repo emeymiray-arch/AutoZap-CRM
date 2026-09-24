@@ -3,16 +3,15 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createDealAction } from "@/lib/actions";
-import { companiesForSelect, contactsForSelect } from "@/lib/list-query";
+import { contactsForSelect } from "@/lib/list-query";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
+import { CompanyField } from "@/components/crm/CompanyField";
+import { MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 import { DEAL_STAGE_LABELS } from "@/lib/labels";
 
 export default async function NewDealPage() {
   await auth();
-  const [companies, contacts] = await Promise.all([
-    companiesForSelect(),
-    contactsForSelect(),
-  ]);
+  const contacts = await contactsForSelect();
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -20,14 +19,8 @@ export default async function NewDealPage() {
       <Card>
         <form action={createDealAction} className="grid gap-3 md:grid-cols-2">
           <Input name="title" label="Название" required className="md:col-span-2" />
-          <Select name="companyId" label="Компания">
-            <option value="">—</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          <CompanyField />
+          <RegionSelect />
           <Select name="contactId" label="Контакт">
             <option value="">—</option>
             {contacts.map((c) => (
@@ -48,6 +41,8 @@ export default async function NewDealPage() {
           <Input name="nextStep" label="Следующий шаг" />
           <Input name="deadline" label="Дедлайн" type="datetime-local" />
           <ResponsibleSelect />
+          <MultiCityField name="warehouseCities" label="Склады (города)" />
+          <MultiCityField name="productionCities" label="Производство (города)" />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Создать сделку</Button>

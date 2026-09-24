@@ -54,6 +54,10 @@ model Company {
   inn             String?
   city            String?
   region          String?
+  /// Города складов через запятую
+  warehouseCities String?
+  /// Города производства через запятую
+  productionCities String?
   address         String?
   phone           String?
   email           String?

@@ -16,6 +16,7 @@ import {
 import { findCompanyDuplicates, findContactDuplicates } from "@/lib/dedup";
 import { processOverdueTasks } from "@/lib/automations";
 import { canManageUsers, isSelectableRole } from "@/lib/permissions";
+import { citiesFromForm } from "@/lib/geo";
 
 function str(form: FormData, key: string) {
   const v = form.get(key);
@@ -38,6 +39,49 @@ function revalidateEntity(paths: string[]) {
   for (const p of paths) revalidatePath(p);
 }
 
+/** Находит компанию по имени или создаёт новую (для форм лида/сделки/партнёра и т.д.) */
+async function resolveCompanyId(
+  formData: FormData,
+  user: { id: string },
+  fallbackName?: string | null,
+): Promise<string | null> {
+  const fromId = str(formData, "companyId");
+  if (fromId) return fromId;
+
+  const name = (str(formData, "companyName") || fallbackName || "").trim();
+  if (!name) return null;
+
+  const found = await prisma.company.findFirst({
+    where: { archivedAt: null, name: { equals: name, mode: "insensitive" } },
+  });
+  if (found) return found.id;
+
+  const company = await prisma.company.create({
+    data: {
+      name,
+      phone: str(formData, "phone"),
+      email: str(formData, "email"),
+      city: str(formData, "city"),
+      region: str(formData, "region"),
+      warehouseCities: citiesFromForm(formData, "warehouseCities"),
+      productionCities: citiesFromForm(formData, "productionCities"),
+      website: str(formData, "website"),
+      responsibleId: str(formData, "responsibleId") || user.id,
+      createdById: user.id,
+    },
+  });
+  await writeAudit({
+    userId: user.id,
+    entityType: "company",
+    entityId: company.id,
+    action: "create",
+    newValue: { id: company.id, name: company.name },
+    summary: `Компания «${company.name}» создана автоматически`,
+  });
+  revalidateEntity(["/crm/companies"]);
+  return company.id;
+}
+
 // ─── Companies ─────────────────────────────────────────────
 
 export async function createCompanyAction(formData: FormData): Promise<void> {
@@ -49,6 +93,8 @@ export async function createCompanyAction(formData: FormData): Promise<void> {
     inn: str(formData, "inn"),
     city: str(formData, "city"),
     region: str(formData, "region"),
+    warehouseCities: citiesFromForm(formData, "warehouseCities"),
+    productionCities: citiesFromForm(formData, "productionCities"),
     address: str(formData, "address"),
     phone: str(formData, "phone"),
     email: str(formData, "email"),
@@ -99,6 +145,8 @@ export async function updateCompanyAction(id: string, formData: FormData) {
     inn: str(formData, "inn"),
     city: str(formData, "city"),
     region: str(formData, "region"),
+    warehouseCities: citiesFromForm(formData, "warehouseCities"),
+    productionCities: citiesFromForm(formData, "productionCities"),
     address: str(formData, "address"),
     phone: str(formData, "phone"),
     email: str(formData, "email"),
@@ -129,6 +177,7 @@ export async function updateCompanyAction(id: string, formData: FormData) {
 export async function createContactAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const force = str(formData, "forceCreate") === "1";
+  const companyId = await resolveCompanyId(formData, user);
   const data = {
     firstName: str(formData, "firstName") || "",
     lastName: str(formData, "lastName"),
@@ -137,7 +186,7 @@ export async function createContactAction(formData: FormData): Promise<void> {
     email: str(formData, "email"),
     telegram: str(formData, "telegram"),
     whatsapp: str(formData, "whatsapp"),
-    companyId: str(formData, "companyId"),
+    companyId,
     responsibleId: str(formData, "responsibleId") || user.id,
     comment: str(formData, "comment"),
     createdById: user.id,
@@ -197,9 +246,10 @@ export async function updateContactAction(id: string, formData: FormData) {
 
 export async function createLeadAction(formData: FormData) {
   const user = await requireUser();
+  const companyId = await resolveCompanyId(formData, user);
   const data = {
     title: str(formData, "title") || "",
-    companyId: str(formData, "companyId"),
+    companyId,
     contactId: str(formData, "contactId"),
     phone: str(formData, "phone"),
     email: str(formData, "email"),
@@ -366,9 +416,10 @@ export async function convertLeadAction(leadId: string) {
 
 export async function createDealAction(formData: FormData) {
   const user = await requireUser();
+  const companyId = await resolveCompanyId(formData, user);
   const data = {
     title: str(formData, "title") || "",
-    companyId: str(formData, "companyId"),
+    companyId,
     contactId: str(formData, "contactId"),
     leadId: str(formData, "leadId"),
     responsibleId: str(formData, "responsibleId") || user.id,
@@ -438,9 +489,11 @@ export async function moveDealStageAction(dealId: string, stage: string) {
 
 export async function createPartnerAction(formData: FormData) {
   const user = await requireUser();
+  const partnerName = str(formData, "name") || "";
+  const companyId = await resolveCompanyId(formData, user, partnerName);
   const data = {
-    name: str(formData, "name") || "",
-    companyId: str(formData, "companyId"),
+    name: partnerName,
+    companyId,
     responsibleId: str(formData, "responsibleId") || user.id,
     status: (str(formData, "status") || "NEW") as never,
     region: str(formData, "region"),
@@ -555,9 +608,10 @@ export async function updateCatalogAction(id: string, formData: FormData) {
 
 export async function createStoreAction(formData: FormData) {
   const user = await requireUser();
+  const companyId = await resolveCompanyId(formData, user);
   const data = {
     name: str(formData, "name") || "",
-    companyId: str(formData, "companyId"),
+    companyId,
     partnerId: str(formData, "partnerId"),
     region: str(formData, "region"),
     status: (str(formData, "status") || "CREATING") as never,
@@ -622,12 +676,13 @@ export async function updateStoreAction(id: string, formData: FormData) {
 
 export async function createTaskAction(formData: FormData) {
   const user = await requireUser();
+  const companyId = await resolveCompanyId(formData, user);
   const data = {
     title: str(formData, "title") || "",
     description: str(formData, "description"),
     responsibleId: str(formData, "responsibleId") || user.id,
     creatorId: user.id,
-    companyId: str(formData, "companyId"),
+    companyId,
     contactId: str(formData, "contactId"),
     leadId: str(formData, "leadId"),
     dealId: str(formData, "dealId"),

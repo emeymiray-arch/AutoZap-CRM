@@ -3,19 +3,15 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createTaskAction } from "@/lib/actions";
-import {
-  companiesForSelect,
-  contactsForSelect,
-  partnersForSelect,
-} from "@/lib/list-query";
+import { contactsForSelect, partnersForSelect } from "@/lib/list-query";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
+import { CompanyField } from "@/components/crm/CompanyField";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/labels";
 import { prisma } from "@/lib/db";
 
 export default async function NewTaskPage() {
   await auth();
-  const [companies, contacts, partners, leads, deals] = await Promise.all([
-    companiesForSelect(),
+  const [contacts, partners, leads, deals] = await Promise.all([
     contactsForSelect(),
     partnersForSelect(),
     prisma.lead.findMany({
@@ -52,14 +48,7 @@ export default async function NewTaskPage() {
               </option>
             ))}
           </Select>
-          <Select name="companyId" label="Компания">
-            <option value="">—</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          <CompanyField />
           <Select name="contactId" label="Контакт">
             <option value="">—</option>
             {contacts.map((c) => (

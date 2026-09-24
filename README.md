@@ -27,24 +27,24 @@ npm run dev
 
 ## База данных
 
-Продакшен / общая БД: **Neon Postgres**.
-
-1. Создайте проект на [console.neon.tech](https://console.neon.tech)
-2. Скопируйте **Connection string** ( pooled / Prisma )
-3. Положите в `.env`:
-
-```env
-DATABASE_URL="postgresql://...@...neon.tech/neondb?sslmode=require"
-```
-
-4. Примените схему и сиды:
+Продакшен: **Neon Postgres** + **Data API** + **Neon Auth**.
 
 ```bash
-npx prisma db push
-npm run db:seed
+neon link --project-id falling-silence-26638843 --branch production -y
+neon env pull -s postgres,auth,data-api
+npx prisma db push && npm run db:seed
 ```
 
-Локальный SQLite больше не используется — одна схема Postgres для всех окружений.
+| Переменная | Назначение |
+|------------|------------|
+| `DATABASE_URL` | Prisma / CRM (основной путь) |
+| `NEON_DATA_API_URL` | PostgREST REST `…/neondb/rest/v1` |
+| `NEON_AUTH_BASE_URL` | JWT для Data API |
+| `NEON_AUTH_JWKS_URL` | JWKS Neon Auth |
+
+Статус Data API: `GET /api/v1/neon/status` (нужна сессия AutoZap).
+
+Клиент: `src/lib/neon-data-api.ts` (`@neondatabase/postgrest-js`).
 
 
 ## API

@@ -5,6 +5,7 @@ import { Input, Select } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { FilterBar } from "@/components/layout/Page";
 import { saveFilterAction } from "@/lib/actions";
+import { REGIONS } from "@/lib/geo";
 
 export function ListFilters({
   statusOptions,
@@ -88,11 +89,18 @@ export function ListFilters({
         ))}
       </Select>
       {showRegion && (
-        <Input
+        <Select
           label="Регион"
           defaultValue={sp.get("region") || ""}
-          onBlur={(e) => setParam("region", e.target.value)}
-        />
+          onChange={(e) => setParam("region", e.target.value)}
+        >
+          <option value="">Все</option>
+          {REGIONS.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </Select>
       )}
       {showSource && (
         <Input

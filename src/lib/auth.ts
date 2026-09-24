@@ -53,7 +53,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 export async function requireUser() {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error("UNAUTHORIZED");
+    const { redirect } = await import("next/navigation");
+    redirect("/login");
   }
-  return session.user;
+  return session!.user;
 }

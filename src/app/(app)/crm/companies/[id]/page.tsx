@@ -51,6 +51,8 @@ export default async function CompanyDetailPage({
               ["ИНН", company.inn],
               ["Город", company.city],
               ["Регион", company.region],
+              ["Склады", company.warehouseCities],
+              ["Производство", company.productionCities],
               ["Адрес", company.address],
               ["Телефон", company.phone],
               ["Email", company.email],

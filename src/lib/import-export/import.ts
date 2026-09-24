@@ -184,6 +184,8 @@ export async function commitImport(
           website: cell(row, "website", "сайт", "WEB"),
           city: cell(row, "city", "город", "ADDRESS_CITY"),
           region: cell(row, "region", "регион", "ADDRESS_REGION"),
+          warehouseCities: cell(row, "warehouseCities", "склады", "склады города"),
+          productionCities: cell(row, "productionCities", "производство", "производство города"),
           notes: cell(row, "notes", "заметки", "COMMENTS"),
           responsibleId: userId,
           createdById: userId,

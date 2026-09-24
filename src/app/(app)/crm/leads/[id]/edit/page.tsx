@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { updateLeadAction } from "@/lib/actions";
 import { companiesForSelect, contactsForSelect, usersForSelect } from "@/lib/list-query";
 import { LEAD_STATUS_LABELS } from "@/lib/labels";
+import { CitySelect, RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditLeadPage({ params }: { params: Promise<{ id: string }> }) {
   await auth();
@@ -41,8 +42,8 @@ export default async function EditLeadPage({ params }: { params: Promise<{ id: s
           </Select>
           <Input name="phone" label="Телефон" defaultValue={lead.phone || ""} />
           <Input name="email" label="Email" defaultValue={lead.email || ""} />
-          <Input name="city" label="Город" defaultValue={lead.city || ""} />
-          <Input name="region" label="Регион" defaultValue={lead.region || ""} />
+          <CitySelect defaultValue={lead.city} />
+          <RegionSelect defaultValue={lead.region} />
           <Input name="source" label="Источник" defaultValue={lead.source || ""} />
           <Input name="website" label="Сайт" defaultValue={lead.website || ""} />
           <Input name="avito" label="Avito" defaultValue={lead.avito || ""} />

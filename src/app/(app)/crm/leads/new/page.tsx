@@ -3,13 +3,15 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createLeadAction } from "@/lib/actions";
-import { companiesForSelect, contactsForSelect } from "@/lib/list-query";
+import { contactsForSelect } from "@/lib/list-query";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
+import { CompanyField } from "@/components/crm/CompanyField";
+import { CitySelect, MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 import { LEAD_STATUS_LABELS } from "@/lib/labels";
 
 export default async function NewLeadPage() {
   await auth();
-  const [companies, contacts] = await Promise.all([companiesForSelect(), contactsForSelect()]);
+  const contacts = await contactsForSelect();
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -17,14 +19,7 @@ export default async function NewLeadPage() {
       <Card>
         <form action={createLeadAction} className="grid gap-3 md:grid-cols-2">
           <Input name="title" label="Название" required className="md:col-span-2" />
-          <Select name="companyId" label="Компания">
-            <option value="">—</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          <CompanyField />
           <Select name="contactId" label="Контакт">
             <option value="">—</option>
             {contacts.map((c) => (
@@ -35,8 +30,10 @@ export default async function NewLeadPage() {
           </Select>
           <Input name="phone" label="Телефон" />
           <Input name="email" label="Email" type="email" />
-          <Input name="city" label="Город" />
-          <Input name="region" label="Регион" />
+          <CitySelect />
+          <RegionSelect />
+          <MultiCityField name="warehouseCities" label="Склады (города)" />
+          <MultiCityField name="productionCities" label="Производство (города)" />
           <Input name="source" label="Источник" />
           <Input name="website" label="Сайт" />
           <Input name="avito" label="Avito" />

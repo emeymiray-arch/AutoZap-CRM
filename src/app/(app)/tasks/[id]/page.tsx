@@ -44,7 +44,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             id={task.id}
             archived={task.archivedAt}
             canDelete={canHardDelete(session.user.role)}
-            editHref={`/tasks/${id}`}
+            editHref={`/tasks/${id}/edit`}
             restoreTo={`/tasks/${id}`}
           />
         }

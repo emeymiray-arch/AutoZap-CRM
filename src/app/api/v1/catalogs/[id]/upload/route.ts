@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { parseSpreadsheet, validateCatalogRows } from "@/lib/import-export/spreadsheet";
 import { writeAudit, logActivity } from "@/lib/audit";
 import { changeStatus } from "@/lib/entity-actions";
+import { assertCanAccessRecord } from "@/lib/access";
 
 export async function POST(
   req: NextRequest,
@@ -17,6 +18,12 @@ export async function POST(
 
   const catalog = await prisma.catalog.findUnique({ where: { id } });
   if (!catalog) return jsonError("Каталог не найден", 404);
+
+  try {
+    assertCanAccessRecord(user, catalog);
+  } catch {
+    return jsonError("Forbidden", 403);
+  }
 
   const form = await req.formData();
   const file = form.get("file");
@@ -46,6 +53,8 @@ export async function POST(
     // non-spreadsheet: store file only
   }
 
+  const wasExpected = catalog.status === "EXPECTED";
+
   const updated = await prisma.catalog.update({
     where: { id },
     data: {
@@ -61,7 +70,7 @@ export async function POST(
       noPhotoCount: validation.noPhotoCount,
       skuCount: validation.rowCount || catalog.skuCount,
       receivedAt: catalog.receivedAt || new Date(),
-      status: catalog.status === "EXPECTED" ? "RECEIVED" : catalog.status,
+      // status changed only via changeStatus below
     },
   });
 
@@ -82,9 +91,10 @@ export async function POST(
     companyId: catalog.companyId,
   });
 
-  if (catalog.status === "EXPECTED") {
+  if (wasExpected) {
     await changeStatus({ entity: "catalog", id, newStatus: "RECEIVED", user });
   }
 
-  return jsonOk({ catalog: updated, validation });
+  const fresh = await prisma.catalog.findUnique({ where: { id } });
+  return jsonOk({ catalog: fresh || updated, validation });
 }
