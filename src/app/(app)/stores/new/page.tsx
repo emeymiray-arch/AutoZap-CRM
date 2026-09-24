@@ -3,7 +3,8 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createStoreAction } from "@/lib/actions";
-import { companiesForSelect, partnersForSelect, usersForSelect } from "@/lib/list-query";
+import { companiesForSelect, partnersForSelect } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { STORE_STATUS_LABELS } from "@/lib/labels";
 
 export default async function NewStorePage({
@@ -14,10 +15,9 @@ export default async function NewStorePage({
   await auth();
   const sp = await searchParams;
   const partnerId = typeof sp.partnerId === "string" ? sp.partnerId : "";
-  const [companies, partners, users] = await Promise.all([
+  const [companies, partners] = await Promise.all([
     companiesForSelect(),
     partnersForSelect(),
-    usersForSelect(),
   ]);
   return (
     <div className="mx-auto max-w-3xl">
@@ -51,13 +51,7 @@ export default async function NewStorePage({
           </Select>
           <Input name="productCount" label="Количество товаров" type="number" />
           <Input name="storeUrl" label="Ссылка на магазин" />
-          <Select name="responsibleId" label="Ответственный">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <ResponsibleSelect />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Создать</Button>

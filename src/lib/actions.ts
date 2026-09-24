@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { writeAudit, logActivity } from "@/lib/audit";
@@ -14,6 +15,7 @@ import {
 } from "@/lib/entity-actions";
 import { findCompanyDuplicates, findContactDuplicates } from "@/lib/dedup";
 import { processOverdueTasks } from "@/lib/automations";
+import { canManageUsers, isSelectableRole } from "@/lib/permissions";
 
 function str(form: FormData, key: string) {
   const v = form.get(key);
@@ -316,7 +318,14 @@ export async function convertLeadAction(leadId: string) {
 
   await prisma.lead.update({
     where: { id: leadId },
-    data: { status: "CONVERTED", companyId, convertedPartnerId: partner.id },
+    data: { companyId, convertedPartnerId: partner.id },
+  });
+
+  await changeStatus({
+    entity: "lead",
+    id: leadId,
+    newStatus: "CONVERTED",
+    user,
   });
 
   const deal = await prisma.deal.create({
@@ -788,4 +797,62 @@ export async function saveFilterAction(formData: FormData) {
     data: { userId: user.id, name, entityType, query },
   });
   revalidateEntity([`/crm/${entityType}`, `/${entityType}`]);
+}
+
+// ─── Users / registration ──────────────────────────────────
+
+async function createUserFromForm(formData: FormData) {
+  const name = (str(formData, "name") || "").trim();
+  const email = (str(formData, "email") || "").toLowerCase().trim();
+  const password = str(formData, "password") || "";
+  const roleRaw = str(formData, "role") || "MANAGER";
+
+  if (!name) throw new Error("Укажите имя — оно появится в списке ответственных");
+  if (!email || !email.includes("@")) throw new Error("Укажите корректный email");
+  if (password.length < 6) throw new Error("Пароль не короче 6 символов");
+  if (!isSelectableRole(roleRaw)) throw new Error("Выберите роль: Менеджер, Руководитель или Менеджер ОС");
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) throw new Error("Пользователь с таким email уже есть");
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  return prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      role: roleRaw,
+      active: true,
+    },
+  });
+}
+
+/** Самостоятельная регистрация с выбором роли */
+export async function registerAction(formData: FormData): Promise<void> {
+  try {
+    await createUserFromForm(formData);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Ошибка регистрации";
+    redirect(`/register?error=${encodeURIComponent(msg)}`);
+  }
+  redirect("/login?registered=1");
+}
+
+/** Добавление участника руководителем / менеджером ОС */
+export async function createTeamUserAction(formData: FormData): Promise<void> {
+  const actor = await requireUser();
+  if (!canManageUsers(actor.role)) {
+    throw new Error("Недостаточно прав для добавления участников");
+  }
+  const created = await createUserFromForm(formData);
+  await writeAudit({
+    userId: actor.id,
+    entityType: "user",
+    entityId: created.id,
+    action: "create",
+    summary: `${actor.name} добавил(а) участника ${created.name} (${created.role})`,
+    newValue: { id: created.id, name: created.name, email: created.email, role: created.role },
+  });
+  revalidateEntity(["/settings"]);
+  redirect("/settings?added=1");
 }

@@ -90,7 +90,6 @@ export function Topbar({
               ["/crm/contacts/new", "Контакт"],
               ["/crm/deals/new", "Сделка"],
               ["/partners/new", "Партнёр"],
-              ["/catalogs/new", "Каталог"],
               ["/stores/new", "Магазин"],
               ["/tasks/new", "Задача"],
             ].map(([href, label]) => (

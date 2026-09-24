@@ -29,14 +29,11 @@ export default async function DashboardPage() {
     proposalSent,
     agreed,
     registrations,
-    waitingCatalog,
-    catalogsReceived,
     storesProcessing,
     storesPublished,
     activePartners,
     overdueTasks,
     partnersContactToday,
-    catalogsReady,
     storesReadyPublish,
     funnelCounts,
     activities,
@@ -49,8 +46,6 @@ export default async function DashboardPage() {
     prisma.lead.count({ where: { archivedAt: null, status: "PROPOSAL_SENT" } }),
     prisma.lead.count({ where: { archivedAt: null, status: "AGREED" } }),
     prisma.lead.count({ where: { archivedAt: null, status: "REGISTRATION" } }),
-    prisma.partner.count({ where: { archivedAt: null, status: "WAITING_CATALOG" } }),
-    prisma.catalog.count({ where: { archivedAt: null, status: "RECEIVED" } }),
     prisma.store.count({
       where: { archivedAt: null, status: { in: ["CREATING", "SETUP", "CATALOG_LOADING", "REVIEW"] } },
     }),
@@ -71,7 +66,6 @@ export default async function DashboardPage() {
         nextContactAt: { gte: todayStart, lte: todayEnd },
       },
     }),
-    prisma.catalog.count({ where: { archivedAt: null, status: { in: ["READY", "RECEIVED", "REVIEW"] } } }),
     prisma.store.count({ where: { archivedAt: null, status: "READY" } }),
     Promise.all(
       LEAD_FUNNEL_STAGES.map(async (s) => ({
@@ -99,8 +93,6 @@ export default async function DashboardPage() {
         {await kpi("/crm/leads?status=PROPOSAL_SENT", "КП отправлено", proposalSent)}
         {await kpi("/crm/leads?status=AGREED", "Согласились", agreed)}
         {await kpi("/crm/leads?status=REGISTRATION", "Регистрации", registrations)}
-        {await kpi("/partners?status=WAITING_CATALOG", "Каталоги ожидаются", waitingCatalog)}
-        {await kpi("/catalogs?status=RECEIVED", "Каталоги получены", catalogsReceived)}
         {await kpi("/stores?filter=processing", "Магазины в обработке", storesProcessing)}
         {await kpi("/stores?status=PUBLISHED", "Опубликованные магазины", storesPublished)}
         {await kpi("/partners?status=ACTIVE", "Активные партнёры", activePartners)}
@@ -137,18 +129,6 @@ export default async function DashboardPage() {
 
         <Card title="Операционный блок">
           <ul className="space-y-2 text-sm">
-            <li className="flex justify-between">
-              <Link href="/partners?status=WAITING_CATALOG" className="hover:underline">
-                Ждут каталог
-              </Link>
-              <span className="font-semibold">{waitingCatalog}</span>
-            </li>
-            <li className="flex justify-between">
-              <Link href="/catalogs?filter=pending" className="hover:underline">
-                Каталоги к обработке
-              </Link>
-              <span className="font-semibold">{catalogsReady}</span>
-            </li>
             <li className="flex justify-between">
               <Link href="/stores?filter=processing" className="hover:underline">
                 Магазины в обработке

@@ -1,4 +1,27 @@
-export type Role = "ADMIN" | "MANAGER_LEAD" | "MANAGER";
+export type Role = "ADMIN" | "MANAGER_LEAD" | "MANAGER" | "OS_MANAGER";
+
+/** Роли, доступные при регистрации и добавлении участника */
+export const SELECTABLE_ROLES: { value: Role; label: string; hint: string }[] = [
+  {
+    value: "MANAGER",
+    label: "Менеджер",
+    hint: "Работает со своими лидами, сделками и задачами",
+  },
+  {
+    value: "MANAGER_LEAD",
+    label: "Руководитель",
+    hint: "Видит всю команду, аналитику, может добавлять участников",
+  },
+  {
+    value: "OS_MANAGER",
+    label: "Менеджер ОС",
+    hint: "Будущие менеджеры AutoZap OS — полный операционный доступ",
+  },
+];
+
+export function isSelectableRole(role: string): role is Role {
+  return SELECTABLE_ROLES.some((r) => r.value === role);
+}
 
 export type SessionUser = {
   id: string;
@@ -8,19 +31,19 @@ export type SessionUser = {
 };
 
 export function canViewAll(role: Role): boolean {
-  return role === "ADMIN" || role === "MANAGER_LEAD";
+  return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
 }
 
 export function canHardDelete(role: Role): boolean {
-  return role === "ADMIN";
+  return role === "ADMIN" || role === "OS_MANAGER";
 }
 
 export function canManageUsers(role: Role): boolean {
-  return role === "ADMIN";
+  return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
 }
 
 export function canSeeAnalytics(role: Role): boolean {
-  return role === "ADMIN" || role === "MANAGER_LEAD";
+  return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
 }
 
 /** Scope filter for managers: only own responsible records */
@@ -31,6 +54,6 @@ export function responsibleScope(user: SessionUser): { responsibleId?: string } 
 
 export function assertHardDelete(user: SessionUser) {
   if (!canHardDelete(user.role)) {
-    throw new Error("Только администратор может окончательно удалить объект");
+    throw new Error("Недостаточно прав для окончательного удаления");
   }
 }

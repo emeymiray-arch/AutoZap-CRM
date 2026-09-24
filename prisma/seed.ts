@@ -39,6 +39,17 @@ async function main() {
     },
   });
 
+  await prisma.user.upsert({
+    where: { email: "os@autozap.local" },
+    update: {},
+    create: {
+      email: "os@autozap.local",
+      name: "Менеджер ОС",
+      role: "OS_MANAGER",
+      passwordHash,
+    },
+  });
+
   const company = await prisma.company.create({
     data: {
       name: "АвтоДеталь Плюс",

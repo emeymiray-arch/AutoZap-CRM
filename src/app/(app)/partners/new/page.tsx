@@ -3,12 +3,13 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createPartnerAction } from "@/lib/actions";
-import { companiesForSelect, usersForSelect } from "@/lib/list-query";
+import { companiesForSelect } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { PARTNER_STATUS_LABELS } from "@/lib/labels";
 
 export default async function NewPartnerPage() {
   await auth();
-  const [companies, users] = await Promise.all([companiesForSelect(), usersForSelect()]);
+  const companies = await companiesForSelect();
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title="Новый партнёр" />
@@ -19,9 +20,7 @@ export default async function NewPartnerPage() {
             <option value="">—</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
-          <Select name="responsibleId" label="Ответственный">
-            {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </Select>
+          <ResponsibleSelect />
           <Select name="status" label="Статус" defaultValue="NEW">
             {Object.entries(PARTNER_STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </Select>

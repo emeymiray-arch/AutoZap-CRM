@@ -6,18 +6,21 @@ const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isLogin = req.nextUrl.pathname.startsWith("/login");
-  const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth");
+  const path = req.nextUrl.pathname;
+  const isLogin = path.startsWith("/login");
+  const isRegister = path.startsWith("/register");
+  const isApiAuth = path.startsWith("/api/auth");
+  const isPublic = isLogin || isRegister;
 
   if (isApiAuth) return NextResponse.next();
 
-  if (!isLoggedIn && !isLogin) {
+  if (!isLoggedIn && !isPublic) {
     const url = new URL("/login", req.nextUrl.origin);
-    url.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    url.searchParams.set("callbackUrl", path);
     return NextResponse.redirect(url);
   }
 
-  if (isLoggedIn && isLogin) {
+  if (isLoggedIn && (isLogin || isRegister)) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   }
 
@@ -25,5 +28,6 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|uploads).*)"],
+  // Protect everything including /uploads — files served only via authenticated API
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

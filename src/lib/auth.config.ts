@@ -9,10 +9,12 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
-      const isLogin = request.nextUrl.pathname.startsWith("/login");
-      const isApiAuth = request.nextUrl.pathname.startsWith("/api/auth");
+      const path = request.nextUrl.pathname;
+      const isLogin = path.startsWith("/login");
+      const isRegister = path.startsWith("/register");
+      const isApiAuth = path.startsWith("/api/auth");
       if (isApiAuth) return true;
-      if (isLogin) return true;
+      if (isLogin || isRegister) return true;
       return isLoggedIn;
     },
     async jwt({ token, user }) {

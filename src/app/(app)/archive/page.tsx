@@ -3,23 +3,24 @@ import { prisma } from "@/lib/db";
 import { PageHeader, Card, formatDateTime } from "@/components/layout/Page";
 import { EntityActions } from "@/components/crm/EntityActions";
 import { canHardDelete } from "@/lib/permissions";
+import { scopeWhere } from "@/lib/list-query";
 import Link from "next/link";
 
 export default async function ArchivePage() {
   const session = await auth();
   if (!session?.user) return null;
   const canDelete = canHardDelete(session.user.role);
+  const scope = scopeWhere(session.user);
 
-  const [leads, companies, contacts, deals, partners, catalogs, stores, tasks] =
+  const [leads, companies, contacts, deals, partners, stores, tasks] =
     await Promise.all([
-      prisma.lead.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.company.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.contact.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.deal.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.partner.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.catalog.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.store.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
-      prisma.task.findMany({ where: { archivedAt: { not: null } }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.lead.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.company.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.contact.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.deal.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.partner.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.store.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
+      prisma.task.findMany({ where: { archivedAt: { not: null }, ...scope }, orderBy: { archivedAt: "desc" }, take: 50 }),
     ]);
 
   const sections: {
@@ -33,7 +34,6 @@ export default async function ArchivePage() {
     { title: "Контакты", entity: "contact", restoreBase: "/crm/contacts", rows: contacts.map((r) => ({ id: r.id, label: `${r.firstName} ${r.lastName || ""}`, archivedAt: r.archivedAt })) },
     { title: "Сделки", entity: "deal", restoreBase: "/crm/deals", rows: deals.map((r) => ({ id: r.id, label: r.title, archivedAt: r.archivedAt })) },
     { title: "Партнёры", entity: "partner", restoreBase: "/partners", rows: partners.map((r) => ({ id: r.id, label: r.name, archivedAt: r.archivedAt })) },
-    { title: "Каталоги", entity: "catalog", restoreBase: "/catalogs", rows: catalogs.map((r) => ({ id: r.id, label: r.name, archivedAt: r.archivedAt })) },
     { title: "Магазины", entity: "store", restoreBase: "/stores", rows: stores.map((r) => ({ id: r.id, label: r.name, archivedAt: r.archivedAt })) },
     { title: "Задачи", entity: "task", restoreBase: "/tasks", rows: tasks.map((r) => ({ id: r.id, label: r.title, archivedAt: r.archivedAt })) },
   ];
@@ -42,7 +42,7 @@ export default async function ArchivePage() {
     <div>
       <PageHeader
         title="Архив"
-        description="Просмотр, восстановление. Окончательное удаление — только для администратора."
+        description="Просмотр, восстановление. Окончательное удаление — для администратора и менеджера ОС."
       />
       <div className="space-y-4">
         {sections.map((s) => (

@@ -7,18 +7,17 @@ import {
   companiesForSelect,
   contactsForSelect,
   partnersForSelect,
-  usersForSelect,
 } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/labels";
 import { prisma } from "@/lib/db";
 
 export default async function NewTaskPage() {
   await auth();
-  const [companies, contacts, partners, users, leads, deals] = await Promise.all([
+  const [companies, contacts, partners, leads, deals] = await Promise.all([
     companiesForSelect(),
     contactsForSelect(),
     partnersForSelect(),
-    usersForSelect(),
     prisma.lead.findMany({
       where: { archivedAt: null },
       select: { id: true, title: true },
@@ -37,13 +36,7 @@ export default async function NewTaskPage() {
         <form action={createTaskAction} className="grid gap-3 md:grid-cols-2">
           <Input name="title" label="Название" required className="md:col-span-2" />
           <Textarea name="description" label="Описание" className="md:col-span-2" />
-          <Select name="responsibleId" label="Ответственный">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <ResponsibleSelect />
           <Input name="deadline" label="Дедлайн" type="datetime-local" />
           <Select name="priority" label="Приоритет" defaultValue="MEDIUM">
             {Object.entries(TASK_PRIORITY_LABELS).map(([k, v]) => (

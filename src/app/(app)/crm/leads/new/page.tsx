@@ -3,16 +3,13 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createLeadAction } from "@/lib/actions";
-import { companiesForSelect, contactsForSelect, usersForSelect } from "@/lib/list-query";
+import { companiesForSelect, contactsForSelect } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { LEAD_STATUS_LABELS } from "@/lib/labels";
 
 export default async function NewLeadPage() {
   await auth();
-  const [companies, contacts, users] = await Promise.all([
-    companiesForSelect(),
-    contactsForSelect(),
-    usersForSelect(),
-  ]);
+  const [companies, contacts] = await Promise.all([companiesForSelect(), contactsForSelect()]);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -47,13 +44,7 @@ export default async function NewLeadPage() {
           <Input name="ozon" label="Ozon" />
           <Input name="businessType" label="Тип бизнеса" />
           <Input name="assortment" label="Ассортимент" />
-          <Select name="responsibleId" label="Ответственный">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <ResponsibleSelect />
           <Select name="status" label="Статус" defaultValue="NEW">
             {Object.entries(LEAD_STATUS_LABELS).map(([k, v]) => (
               <option key={k} value={k}>

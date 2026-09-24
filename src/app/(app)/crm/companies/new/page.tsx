@@ -4,7 +4,7 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createCompanyAction } from "@/lib/actions";
-import { usersForSelect } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import Link from "next/link";
 
 export default async function NewCompanyPage({
@@ -14,7 +14,6 @@ export default async function NewCompanyPage({
 }) {
   await auth();
   const sp = await searchParams;
-  const users = await usersForSelect();
   const dupIds = sp.duplicateOf?.split(",").filter(Boolean) || [];
   const dups =
     dupIds.length > 0
@@ -62,13 +61,7 @@ export default async function NewCompanyPage({
           <Input name="companyType" label="Тип компании" />
           <Input name="skuCount" label="Кол-во SKU" type="number" />
           <Input name="categories" label="Категории" />
-          <Select name="responsibleId" label="Ответственный">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <ResponsibleSelect />
           <Input name="nextContactAt" label="Следующий контакт" type="datetime-local" />
           <Textarea name="notes" label="Заметки" className="md:col-span-2" />
           <div className="md:col-span-2">

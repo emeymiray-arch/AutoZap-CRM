@@ -19,7 +19,6 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
     include: {
       company: true,
       responsible: true,
-      catalogs: { where: { archivedAt: null }, orderBy: { updatedAt: "desc" } },
       stores: { where: { archivedAt: null }, orderBy: { updatedAt: "desc" } },
     },
   });
@@ -57,18 +56,6 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
             ))}
             <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Комментарий</dt><dd>{partner.comment || "—"}</dd></div>
           </dl>
-          <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Каталоги</h3>
-              <Button href={`/catalogs/new?partnerId=${partner.id}`} size="sm" variant="secondary">+ Каталог</Button>
-            </div>
-            <ul className="space-y-1 text-sm">
-              {partner.catalogs.map((c) => (
-                <li key={c.id}><a className="text-teal-800 hover:underline" href={`/catalogs/${c.id}`}>{c.name}</a> · {c.status}</li>
-              ))}
-              {partner.catalogs.length === 0 && <li className="text-slate-500">Нет каталогов</li>}
-            </ul>
-          </div>
           <div className="mt-4">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Магазины</h3>

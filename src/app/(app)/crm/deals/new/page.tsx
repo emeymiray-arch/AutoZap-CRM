@@ -3,15 +3,15 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createDealAction } from "@/lib/actions";
-import { companiesForSelect, contactsForSelect, usersForSelect } from "@/lib/list-query";
+import { companiesForSelect, contactsForSelect } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { DEAL_STAGE_LABELS } from "@/lib/labels";
 
 export default async function NewDealPage() {
   await auth();
-  const [companies, contacts, users] = await Promise.all([
+  const [companies, contacts] = await Promise.all([
     companiesForSelect(),
     contactsForSelect(),
-    usersForSelect(),
   ]);
 
   return (
@@ -47,13 +47,7 @@ export default async function NewDealPage() {
           <Input name="source" label="Источник" />
           <Input name="nextStep" label="Следующий шаг" />
           <Input name="deadline" label="Дедлайн" type="datetime-local" />
-          <Select name="responsibleId" label="Ответственный">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <ResponsibleSelect />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Создать сделку</Button>

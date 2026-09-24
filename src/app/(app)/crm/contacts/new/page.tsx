@@ -4,7 +4,8 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createContactAction } from "@/lib/actions";
-import { companiesForSelect, usersForSelect } from "@/lib/list-query";
+import { companiesForSelect } from "@/lib/list-query";
+import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import Link from "next/link";
 
 export default async function NewContactPage({
@@ -14,7 +15,7 @@ export default async function NewContactPage({
 }) {
   await auth();
   const sp = await searchParams;
-  const [companies, users] = await Promise.all([companiesForSelect(), usersForSelect()]);
+  const companies = await companiesForSelect();
   const dupIds = sp.duplicateOf?.split(",").filter(Boolean) || [];
   const dups =
     dupIds.length > 0
@@ -56,13 +57,7 @@ export default async function NewContactPage({
           <Input name="email" label="Email" type="email" />
           <Input name="telegram" label="Telegram" />
           <Input name="whatsapp" label="WhatsApp" />
-          <Select name="responsibleId" label="Ответственный" className="md:col-span-2">
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </Select>
+          <ResponsibleSelect className="md:col-span-2" />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">

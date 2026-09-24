@@ -30,10 +30,10 @@ export default async function PartnersPage({
     ...scopeWhere(session.user),
     ...(sp.status ? { status: sp.status } : {}),
     ...(sp.responsibleId ? { responsibleId: sp.responsibleId } : {}),
-    ...(sp.region ? { region: { contains: sp.region } } : {}),
+    ...(sp.region ? { region: { contains: sp.region, mode: "insensitive" as const } } : {}),
     ...(dateRange(sp.from, sp.to) ? { createdAt: dateRange(sp.from, sp.to) } : {}),
     ...(sp.q
-      ? { OR: [{ name: { contains: sp.q } }, { region: { contains: sp.q } }] }
+      ? { OR: [{ name: { contains: sp.q, mode: "insensitive" as const } }, { region: { contains: sp.q, mode: "insensitive" as const } }] }
       : {}),
   };
 

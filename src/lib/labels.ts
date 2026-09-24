@@ -85,6 +85,7 @@ export const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Администратор",
   MANAGER_LEAD: "Руководитель",
   MANAGER: "Менеджер",
+  OS_MANAGER: "Менеджер ОС",
 };
 
 export const ACTIVITY_TYPE_LABELS: Record<string, string> = {
