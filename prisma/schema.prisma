@@ -58,6 +58,8 @@ model Company {
   warehouseCities String?
   /// Города производства через запятую
   productionCities String?
+  /// Города магазинов через запятую
+  storeCities     String?
   address         String?
   phone           String?
   email           String?

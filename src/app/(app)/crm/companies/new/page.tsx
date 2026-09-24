@@ -55,8 +55,9 @@ export default async function NewCompanyPage({
           <Input name="inn" label="ИНН" />
           <CitySelect />
           <RegionSelect />
-          <MultiCityField name="warehouseCities" label="Склады (города)" />
-          <MultiCityField name="productionCities" label="Производство (города)" />
+          <MultiCityField name="warehouseCities" label="Склады — города" />
+          <MultiCityField name="productionCities" label="Производство — города" />
+          <MultiCityField name="storeCities" label="Магазины — города" />
           <Input name="address" label="Адрес" className="md:col-span-2" />
           <Input name="phone" label="Телефон" />
           <Input name="email" label="Email" type="email" />

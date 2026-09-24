@@ -37,6 +37,7 @@ export const CREATE_ALLOWLIST: Record<string, string[]> = {
     "region",
     "warehouseCities",
     "productionCities",
+    "storeCities",
     "address",
     "phone",
     "email",

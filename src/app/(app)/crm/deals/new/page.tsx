@@ -41,8 +41,9 @@ export default async function NewDealPage() {
           <Input name="nextStep" label="Следующий шаг" />
           <Input name="deadline" label="Дедлайн" type="datetime-local" />
           <ResponsibleSelect />
-          <MultiCityField name="warehouseCities" label="Склады (города)" />
-          <MultiCityField name="productionCities" label="Производство (города)" />
+          <MultiCityField name="warehouseCities" label="Склады — города" />
+          <MultiCityField name="productionCities" label="Производство — города" />
+          <MultiCityField name="storeCities" label="Магазины — города" />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Создать сделку</Button>
