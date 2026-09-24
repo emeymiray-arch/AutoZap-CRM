@@ -21,12 +21,14 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
+    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{title}</h1>
         {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">{actions}</div>
+      )}
     </div>
   );
 }
@@ -54,7 +56,7 @@ export function Card({
 
 export function FilterBar({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 bg-white p-3">
+    <div className="mb-3 flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-end">
       {children}
     </div>
   );

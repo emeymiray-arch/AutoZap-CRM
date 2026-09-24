@@ -77,8 +77,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-800 bg-white p-8 shadow-2xl">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-950 px-3 py-6 sm:px-4">
+      <div className="w-full max-w-md rounded-xl border border-slate-800 bg-white p-5 shadow-2xl sm:p-8">
         <div className="mb-6 text-center">
           <div className="text-2xl font-semibold tracking-tight">AutoZap OS</div>
           <p className="mt-1 text-sm text-slate-500">Вход в операционную систему</p>

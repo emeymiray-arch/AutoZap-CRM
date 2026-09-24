@@ -7,7 +7,7 @@ export function Input({
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) {
   return (
-    <label className="block space-y-1">
+    <label className={cn("block min-w-0 space-y-1 sm:min-w-[10rem]")}>
       {label && (
         <span className="text-xs font-medium text-slate-600">
           {label}
@@ -16,7 +16,7 @@ export function Input({
       )}
       <input
         className={cn(
-          "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500",
+          "w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-500 sm:py-2",
           className
         )}
         required={required}
@@ -33,7 +33,7 @@ export function Textarea({
   ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }) {
   return (
-    <label className="block space-y-1">
+    <label className="block min-w-0 space-y-1">
       {label && (
         <span className="text-xs font-medium text-slate-600">
           {label}
@@ -42,7 +42,7 @@ export function Textarea({
       )}
       <textarea
         className={cn(
-          "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500 min-h-24",
+          "w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-500 min-h-24 sm:py-2",
           className
         )}
         required={required}
@@ -60,7 +60,7 @@ export function Select({
   ...props
 }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }) {
   return (
-    <label className="block space-y-1">
+    <label className={cn("block min-w-0 space-y-1 sm:min-w-[10rem]")}>
       {label && (
         <span className="text-xs font-medium text-slate-600">
           {label}
@@ -69,7 +69,7 @@ export function Select({
       )}
       <select
         className={cn(
-          "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500",
+          "w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-500 sm:py-2",
           className
         )}
         required={required}
