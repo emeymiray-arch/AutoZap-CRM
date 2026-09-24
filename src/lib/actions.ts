@@ -810,7 +810,7 @@ async function createUserFromForm(formData: FormData) {
   if (!name) throw new Error("Укажите имя — оно появится в списке ответственных");
   if (!email || !email.includes("@")) throw new Error("Укажите корректный email");
   if (password.length < 6) throw new Error("Пароль не короче 6 символов");
-  if (!isSelectableRole(roleRaw)) throw new Error("Выберите роль: Менеджер, Руководитель или Менеджер ОС");
+  if (!isSelectableRole(roleRaw)) throw new Error("Выберите роль: Менеджер или Руководитель");
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error("Пользователь с таким email уже есть");
@@ -827,22 +827,16 @@ async function createUserFromForm(formData: FormData) {
   });
 }
 
-/** Самостоятельная регистрация с выбором роли */
-export async function registerAction(formData: FormData): Promise<void> {
-  try {
-    await createUserFromForm(formData);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Ошибка регистрации";
-    redirect(`/register?error=${encodeURIComponent(msg)}`);
-  }
-  redirect("/login?registered=1");
+/** Публичная регистрация отключена */
+export async function registerAction(): Promise<void> {
+  redirect("/login");
 }
 
-/** Добавление участника руководителем / менеджером ОС */
+/** Администратор программы создаёт аккаунт менеджеру или руководителю */
 export async function createTeamUserAction(formData: FormData): Promise<void> {
   const actor = await requireUser();
   if (!canManageUsers(actor.role)) {
-    throw new Error("Недостаточно прав для добавления участников");
+    throw new Error("Только администратор программы может создавать аккаунты");
   }
   const created = await createUserFromForm(formData);
   await writeAudit({
@@ -850,7 +844,7 @@ export async function createTeamUserAction(formData: FormData): Promise<void> {
     entityType: "user",
     entityId: created.id,
     action: "create",
-    summary: `${actor.name} добавил(а) участника ${created.name} (${created.role})`,
+    summary: `${actor.name} создал(а) аккаунт ${created.name} (${created.role})`,
     newValue: { id: created.id, name: created.name, email: created.email, role: created.role },
   });
   revalidateEntity(["/settings"]);

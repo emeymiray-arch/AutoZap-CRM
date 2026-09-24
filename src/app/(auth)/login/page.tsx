@@ -13,7 +13,6 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const showDemoHint = process.env.NODE_ENV === "development";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,17 +67,9 @@ function LoginForm() {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Вход…" : "Войти"}
       </Button>
-      <p className="text-center text-sm text-slate-500">
-        Нет аккаунта?{" "}
-        <a href="/register" className="font-medium text-slate-900 underline">
-          Регистрация
-        </a>
+      <p className="text-center text-xs text-slate-500">
+        Аккаунт выдаёт администратор программы
       </p>
-      {showDemoHint && (
-        <p className="text-center text-xs text-slate-500">
-          Dev: admin@autozap.local / admin123
-        </p>
-      )}
     </form>
   );
 }

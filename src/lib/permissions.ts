@@ -1,6 +1,6 @@
 export type Role = "ADMIN" | "MANAGER_LEAD" | "MANAGER" | "OS_MANAGER";
 
-/** Роли, доступные при регистрации и добавлении участника */
+/** Роли, которые администратор выдаёт менеджерам и руководителям */
 export const SELECTABLE_ROLES: { value: Role; label: string; hint: string }[] = [
   {
     value: "MANAGER",
@@ -10,12 +10,7 @@ export const SELECTABLE_ROLES: { value: Role; label: string; hint: string }[] = 
   {
     value: "MANAGER_LEAD",
     label: "Руководитель",
-    hint: "Видит всю команду, аналитику, может добавлять участников",
-  },
-  {
-    value: "OS_MANAGER",
-    label: "Менеджер ОС",
-    hint: "Будущие менеджеры AutoZap OS — полный операционный доступ",
+    hint: "Видит команду и аналитику",
   },
 ];
 
@@ -35,11 +30,12 @@ export function canViewAll(role: Role): boolean {
 }
 
 export function canHardDelete(role: Role): boolean {
-  return role === "ADMIN" || role === "OS_MANAGER";
+  return role === "ADMIN";
 }
 
+/** Только администратор программы создаёт аккаунты */
 export function canManageUsers(role: Role): boolean {
-  return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
+  return role === "ADMIN";
 }
 
 export function canSeeAnalytics(role: Role): boolean {

@@ -82,7 +82,7 @@ export const TASK_PRIORITY_LABELS: Record<string, string> = {
 };
 
 export const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Администратор",
+  ADMIN: "Администратор программы",
   MANAGER_LEAD: "Руководитель",
   MANAGER: "Менеджер",
   OS_MANAGER: "Менеджер ОС",

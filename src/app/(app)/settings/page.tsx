@@ -44,7 +44,7 @@ export default async function SettingsPage({
         <Card title="Участники и роли">
           {!canAdd && (
             <p className="mb-3 text-xs text-amber-700">
-              Добавлять участников могут руководитель и менеджер ОС. Список — только для чтения.
+              Аккаунты создаёт только администратор программы.
             </p>
           )}
           <ul className="mb-4 space-y-2 text-sm">
@@ -61,8 +61,11 @@ export default async function SettingsPage({
 
           {canAdd && (
             <form action={createTeamUserAction} className="space-y-3 border-t border-slate-100 pt-4">
-              <div className="text-sm font-medium text-slate-800">Добавить участника</div>
-              <Input name="name" label="Имя" required placeholder="Обязательно — попадёт в ответственные" />
+              <div className="text-sm font-medium text-slate-800">Создать аккаунт менеджеру / руководителю</div>
+              <p className="text-xs text-slate-500">
+                Имя обязательно — сразу появится в поле «Ответственный». Человек входит по email и паролю.
+              </p>
+              <Input name="name" label="Имя" required placeholder="Имя сотрудника" />
               <Input name="email" label="Email" type="email" required />
               <Input name="password" label="Пароль" type="password" required minLength={6} />
               <Select name="role" label="Роль" required defaultValue="MANAGER">
@@ -73,7 +76,7 @@ export default async function SettingsPage({
                 ))}
               </Select>
               <Button type="submit" size="sm">
-                Добавить
+                Создать аккаунт
               </Button>
             </form>
           )}

@@ -42,7 +42,7 @@ export default async function ArchivePage() {
     <div>
       <PageHeader
         title="Архив"
-        description="Просмотр, восстановление. Окончательное удаление — для администратора и менеджера ОС."
+        description="Просмотр, восстановление. Окончательное удаление — только администратор программы."
       />
       <div className="space-y-4">
         {sections.map((s) => (
