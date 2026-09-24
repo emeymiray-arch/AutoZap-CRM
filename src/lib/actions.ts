@@ -39,7 +39,7 @@ function revalidateEntity(paths: string[]) {
   for (const p of paths) revalidatePath(p);
 }
 
-/** Находит компанию по имени или создаёт новую (для форм лида/сделки/партнёра и т.д.) */
+/** Находит компанию по имени или создаёт новую. */
 async function resolveCompanyId(
   formData: FormData,
   user: { id: string },
@@ -83,18 +83,74 @@ async function resolveCompanyId(
   return company.id;
 }
 
-/** Обновляет склады/производство/магазины у связанной компании */
-async function syncCompanyLocations(companyId: string | null | undefined, formData: FormData) {
-  if (!companyId) return;
-  await prisma.company.update({
-    where: { id: companyId },
-    data: {
-      warehouseCities: citiesFromForm(formData, "warehouseCities"),
-      productionCities: citiesFromForm(formData, "productionCities"),
-      storeCities: citiesFromForm(formData, "storeCities"),
-    },
-  });
-  revalidateEntity(["/crm/companies", `/crm/companies/${companyId}`]);
+/**
+ * Компания, партнёр и сделка — одна сущность в списке компаний.
+ * Название партнёра/сделки всегда создаёт или обновляет компанию с тем же именем.
+ */
+async function ensureCompanyMirror(
+  formData: FormData,
+  user: { id: string },
+  entityName: string,
+  existingCompanyId?: string | null,
+): Promise<string> {
+  const name = (str(formData, "companyName") || entityName).trim();
+  let companyId = existingCompanyId || null;
+
+  if (!companyId) {
+    const found = await prisma.company.findFirst({
+      where: { archivedAt: null, name: { equals: name, mode: "insensitive" } },
+    });
+    companyId = found?.id ?? null;
+  }
+
+  const locationData = {
+    name,
+    region: str(formData, "region"),
+    warehouseCities: citiesFromForm(formData, "warehouseCities"),
+    productionCities: citiesFromForm(formData, "productionCities"),
+    storeCities: citiesFromForm(formData, "storeCities"),
+    phone: str(formData, "phone"),
+    email: str(formData, "email"),
+    city: str(formData, "city"),
+    website: str(formData, "website"),
+  };
+
+  if (!companyId) {
+    const company = await prisma.company.create({
+      data: {
+        ...locationData,
+        responsibleId: str(formData, "responsibleId") || user.id,
+        createdById: user.id,
+      },
+    });
+    companyId = company.id;
+    await writeAudit({
+      userId: user.id,
+      entityType: "company",
+      entityId: company.id,
+      action: "create",
+      newValue: { id: company.id, name: company.name },
+      summary: `Компания «${company.name}» создана из партнёра/сделки`,
+    });
+  } else {
+    await prisma.company.update({
+      where: { id: companyId },
+      data: {
+        name: locationData.name,
+        region: locationData.region,
+        warehouseCities: locationData.warehouseCities,
+        productionCities: locationData.productionCities,
+        storeCities: locationData.storeCities,
+        ...(locationData.phone ? { phone: locationData.phone } : {}),
+        ...(locationData.email ? { email: locationData.email } : {}),
+        ...(locationData.city ? { city: locationData.city } : {}),
+        ...(locationData.website ? { website: locationData.website } : {}),
+      },
+    });
+  }
+
+  revalidateEntity(["/crm/companies", `/crm/companies/${companyId}`, "/partners", "/crm/deals"]);
+  return companyId;
 }
 
 // ─── Companies ─────────────────────────────────────────────
@@ -433,9 +489,12 @@ export async function convertLeadAction(leadId: string) {
 
 export async function createDealAction(formData: FormData) {
   const user = await requireUser();
-  const companyId = await resolveCompanyId(formData, user);
+  const title = str(formData, "title") || "";
+  if (!title) throw new Error("Название обязательно");
+  // Сделка = компания: название сделки попадает в список компаний
+  const companyId = await ensureCompanyMirror(formData, user, title);
   const data = {
-    title: str(formData, "title") || "",
+    title,
     companyId,
     contactId: str(formData, "contactId"),
     leadId: str(formData, "leadId"),
@@ -448,7 +507,6 @@ export async function createDealAction(formData: FormData) {
     comment: str(formData, "comment"),
     createdById: user.id,
   };
-  if (!data.title) throw new Error("Название обязательно");
   const deal = await prisma.deal.create({ data });
   await writeAudit({
     userId: user.id,
@@ -465,7 +523,7 @@ export async function createDealAction(formData: FormData) {
     companyId: deal.companyId,
     dealId: deal.id,
   });
-  revalidateEntity(["/crm/deals", "/funnel", "/dashboard"]);
+  revalidateEntity(["/crm/deals", "/funnel", "/dashboard", "/crm/companies"]);
   redirect(`/crm/deals/${deal.id}`);
 }
 
@@ -507,7 +565,9 @@ export async function moveDealStageAction(dealId: string, stage: string) {
 export async function createPartnerAction(formData: FormData) {
   const user = await requireUser();
   const partnerName = str(formData, "name") || "";
-  const companyId = await resolveCompanyId(formData, user, partnerName);
+  if (!partnerName) throw new Error("Название обязательно");
+  // Партнёр = компания: всегда появляется в списке компаний
+  const companyId = await ensureCompanyMirror(formData, user, partnerName);
   const data = {
     name: partnerName,
     companyId,
@@ -518,9 +578,7 @@ export async function createPartnerAction(formData: FormData) {
     nextContactAt: date(formData, "nextContactAt"),
     createdById: user.id,
   };
-  if (!data.name) throw new Error("Название обязательно");
   const partner = await prisma.partner.create({ data });
-  await syncCompanyLocations(partner.companyId, formData);
   await writeAudit({
     userId: user.id,
     entityType: "partner",
@@ -536,7 +594,7 @@ export async function createPartnerAction(formData: FormData) {
     companyId: partner.companyId,
     partnerId: partner.id,
   });
-  revalidateEntity(["/partners", "/dashboard"]);
+  revalidateEntity(["/partners", "/crm/companies", "/dashboard"]);
   redirect(`/partners/${partner.id}`);
 }
 
@@ -544,12 +602,15 @@ export async function updatePartnerAction(id: string, formData: FormData) {
   const user = await requireUser();
   const before = await prisma.partner.findUniqueOrThrow({ where: { id } });
   const newStatus = str(formData, "status") || before.status;
-  let companyId = str(formData, "companyId") || before.companyId;
-  if (!companyId) {
-    companyId = await resolveCompanyId(formData, user, str(formData, "name") || before.name);
-  }
+  const partnerName = str(formData, "name") || before.name;
+  const companyId = await ensureCompanyMirror(
+    formData,
+    user,
+    partnerName,
+    before.companyId,
+  );
   const data = {
-    name: str(formData, "name") || before.name,
+    name: partnerName,
     companyId,
     responsibleId: str(formData, "responsibleId") || before.responsibleId,
     status: newStatus as never,
@@ -559,7 +620,6 @@ export async function updatePartnerAction(id: string, formData: FormData) {
     lastContactAt: date(formData, "lastContactAt"),
   };
   const after = await prisma.partner.update({ where: { id }, data });
-  await syncCompanyLocations(after.companyId, formData);
   await trackFieldChanges("partner", id, user, before as never, after as never);
   if (before.status !== newStatus) {
     await changeStatus({ entity: "partner", id, newStatus, user });

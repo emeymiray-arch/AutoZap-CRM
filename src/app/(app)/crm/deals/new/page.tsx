@@ -19,7 +19,7 @@ export default async function NewDealPage() {
       <Card>
         <form action={createDealAction} className="grid gap-3 md:grid-cols-2">
           <Input name="title" label="Название" required className="md:col-span-2" />
-          <CompanyField />
+          <CompanyField hint="Если пусто — компания создастся по названию сделки" />
           <RegionSelect />
           <Select name="contactId" label="Контакт">
             <option value="">—</option>

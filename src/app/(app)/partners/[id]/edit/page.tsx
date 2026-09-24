@@ -5,7 +5,7 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { updatePartnerAction } from "@/lib/actions";
-import { companiesForSelect, usersForSelect } from "@/lib/list-query";
+import { usersForSelect } from "@/lib/list-query";
 import { PARTNER_STATUS_LABELS } from "@/lib/labels";
 import { MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 
@@ -17,7 +17,7 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
     include: { company: true },
   });
   if (!partner) notFound();
-  const [companies, users] = await Promise.all([companiesForSelect(), usersForSelect()]);
+  const users = await usersForSelect();
   const action = updatePartnerAction.bind(null, id);
   const company = partner.company;
 
@@ -27,14 +27,6 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
       <Card>
         <form action={action} className="grid gap-3 md:grid-cols-2">
           <Input name="name" label="Название" required defaultValue={partner.name} className="md:col-span-2" />
-          <Select name="companyId" label="Компания" defaultValue={partner.companyId || ""}>
-            <option value="">—</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
           <Select name="responsibleId" label="Ответственный" defaultValue={partner.responsibleId || ""}>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
@@ -60,11 +52,7 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
             label="Производство"
             defaultValue={company?.productionCities}
           />
-          <MultiCityField
-            name="storeCities"
-            label="Магазины"
-            defaultValue={company?.storeCities}
-          />
+          <MultiCityField name="storeCities" label="Магазины" defaultValue={company?.storeCities} />
           <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Сохранить</Button>
