@@ -18,26 +18,35 @@ import {
   Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Role } from "@/lib/permissions";
+import { canAccessSettings, canSeeAnalytics, canViewAll } from "@/lib/permissions";
 
-const items = [
-  { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
-  { href: "/crm/leads", label: "Лиды", icon: Users, group: "CRM" },
-  { href: "/crm/companies", label: "Компании", icon: Building2, group: "CRM" },
-  { href: "/crm/contacts", label: "Контакты", icon: Contact, group: "CRM" },
-  { href: "/crm/deals", label: "Сделки", icon: Briefcase, group: "CRM" },
-  { href: "/funnel", label: "Воронка", icon: Kanban },
-  { href: "/partners", label: "Партнёры", icon: Handshake },
-  { href: "/stores", label: "Магазины", icon: Store },
-  { href: "/tasks", label: "Задачи", icon: CheckSquare },
-  { href: "/activities", label: "Активности", icon: Activity },
-  { href: "/analytics", label: "Аналитика", icon: BarChart3 },
-  { href: "/archive", label: "Архив", icon: Archive },
-  { href: "/settings", label: "Настройки", icon: Settings },
+const items: {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  group?: string;
+  visible: (role: Role) => boolean;
+}[] = [
+  { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard, visible: () => true },
+  { href: "/crm/leads", label: "Лиды", icon: Users, group: "CRM", visible: () => true },
+  { href: "/crm/companies", label: "Компании", icon: Building2, group: "CRM", visible: () => true },
+  { href: "/crm/contacts", label: "Контакты", icon: Contact, group: "CRM", visible: () => true },
+  { href: "/crm/deals", label: "Сделки", icon: Briefcase, group: "CRM", visible: () => true },
+  { href: "/funnel", label: "Воронка", icon: Kanban, visible: () => true },
+  { href: "/partners", label: "Партнёры", icon: Handshake, visible: () => true },
+  { href: "/stores", label: "Магазины", icon: Store, visible: () => true },
+  { href: "/tasks", label: "Задачи", icon: CheckSquare, visible: () => true },
+  { href: "/activities", label: "Активности", icon: Activity, visible: () => true },
+  { href: "/analytics", label: "Аналитика", icon: BarChart3, visible: canSeeAnalytics },
+  { href: "/archive", label: "Архив", icon: Archive, visible: canViewAll },
+  { href: "/settings", label: "Настройки", icon: Settings, visible: canAccessSettings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
   let lastGroup: string | undefined;
+  const visibleItems = items.filter((item) => item.visible(role));
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-slate-200 bg-slate-950 text-slate-100">
@@ -46,7 +55,7 @@ export function Sidebar() {
         <div className="text-[11px] text-slate-400">Операционная система</div>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           const showGroup = item.group && item.group !== lastGroup;
           if (item.group) lastGroup = item.group;
@@ -62,7 +71,7 @@ export function Sidebar() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition",
-                  active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                  active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-900 hover:text-white",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0 opacity-80" />

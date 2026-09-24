@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
 import { LEAD_STATUS_LABELS } from "@/lib/labels";
 import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import type { Prisma } from "@prisma/client";
 
 export default async function LeadsPage({
@@ -33,16 +33,16 @@ export default async function LeadsPage({
     ...scopeWhere(session.user),
     ...(sp.status ? { status: sp.status as never } : {}),
     ...(responsibleId ? { responsibleId } : {}),
-    ...(sp.region ? { region: { contains: sp.region } } : {}),
-    ...(sp.source ? { source: { contains: sp.source } } : {}),
+    ...(sp.region ? { region: { contains: sp.region, mode: "insensitive" as const } } : {}),
+    ...(sp.source ? { source: { contains: sp.source, mode: "insensitive" as const } } : {}),
     ...(dateRange(sp.from, sp.to) ? { createdAt: dateRange(sp.from, sp.to) } : {}),
     ...(sp.q
       ? {
           OR: [
-            { title: { contains: sp.q } },
-            { phone: { contains: sp.q } },
-            { email: { contains: sp.q } },
-            { city: { contains: sp.q } },
+            { title: { contains: sp.q, mode: "insensitive" as const } },
+            { phone: { contains: sp.q, mode: "insensitive" as const } },
+            { email: { contains: sp.q, mode: "insensitive" as const } },
+            { city: { contains: sp.q, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -70,10 +70,7 @@ export default async function LeadsPage({
         description={`${leads.length} записей`}
         actions={
           <>
-            <ExportButtons entity="leads" />
-            <Button href="/crm/leads/import" variant="secondary" size="sm">
-              Импорт
-            </Button>
+            <DataTools entity="leads" importHref="/crm/leads/import" />
             <Button href="/crm/leads/new" size="sm">
               + Создать
             </Button>

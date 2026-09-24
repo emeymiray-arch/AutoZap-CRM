@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
 
@@ -32,16 +32,16 @@ export default async function CompaniesPage({
     ...scopeWhere(session.user),
     ...(sp.status ? { status: sp.status } : {}),
     ...(responsibleId ? { responsibleId } : {}),
-    ...(sp.region ? { region: { contains: sp.region } } : {}),
+    ...(sp.region ? { region: { contains: sp.region, mode: "insensitive" as const } } : {}),
     ...(dateRange(sp.from, sp.to) ? { createdAt: dateRange(sp.from, sp.to) } : {}),
     ...(sp.q
       ? {
           OR: [
-            { name: { contains: sp.q } },
-            { inn: { contains: sp.q } },
-            { phone: { contains: sp.q } },
-            { email: { contains: sp.q } },
-            { city: { contains: sp.q } },
+            { name: { contains: sp.q, mode: "insensitive" as const } },
+            { inn: { contains: sp.q, mode: "insensitive" as const } },
+            { phone: { contains: sp.q, mode: "insensitive" as const } },
+            { email: { contains: sp.q, mode: "insensitive" as const } },
+            { city: { contains: sp.q, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -61,7 +61,7 @@ export default async function CompaniesPage({
         description={`${companies.length} записей`}
         actions={
           <>
-            <ExportButtons entity="companies" />
+            <DataTools entity="companies" importHref="/crm/companies/import" />
             <Button href="/crm/companies/new" size="sm">
               + Создать
             </Button>

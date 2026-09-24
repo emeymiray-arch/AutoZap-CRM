@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import { PARTNER_STATUS_LABELS } from "@/lib/labels";
 import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
@@ -55,7 +55,7 @@ export default async function PartnersPage({
         description={`${rows.length} записей`}
         actions={
           <>
-            <ExportButtons entity="partners" />
+            <DataTools entity="partners" />
             <Button href="/partners/new" size="sm">+ Создать</Button>
           </>
         }

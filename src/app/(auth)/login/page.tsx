@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Form";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 function LoginForm() {
   const router = useRouter();
@@ -55,9 +56,9 @@ function LoginForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <Input
+      <PasswordInput
+        name="password"
         label="Пароль"
-        type="password"
         required
         autoComplete="current-password"
         value={password}

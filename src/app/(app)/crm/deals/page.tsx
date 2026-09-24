@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import { DEAL_STAGE_LABELS } from "@/lib/labels";
 import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
@@ -33,11 +33,11 @@ export default async function DealsPage({
     ...scopeWhere(session.user),
     ...(sp.stage ? { stage: sp.stage as never } : {}),
     ...(responsibleId ? { responsibleId } : {}),
-    ...(sp.source ? { source: { contains: sp.source } } : {}),
+    ...(sp.source ? { source: { contains: sp.source, mode: "insensitive" as const } } : {}),
     ...(dateRange(sp.from, sp.to) ? { createdAt: dateRange(sp.from, sp.to) } : {}),
     ...(sp.q
       ? {
-          OR: [{ title: { contains: sp.q } }, { comment: { contains: sp.q } }],
+          OR: [{ title: { contains: sp.q, mode: "insensitive" as const } }, { comment: { contains: sp.q, mode: "insensitive" as const } }],
         }
       : {}),
   };
@@ -56,7 +56,7 @@ export default async function DealsPage({
         description={`${deals.length} записей`}
         actions={
           <>
-            <ExportButtons entity="deals" />
+            <DataTools entity="deals" />
             <Button href="/funnel" variant="secondary" size="sm">
               Воронка
             </Button>

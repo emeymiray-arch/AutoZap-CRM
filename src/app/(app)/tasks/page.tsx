@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from "@/lib/labels";
 import { parseListParams, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
@@ -34,7 +34,7 @@ export default async function TasksPage({
     ...(sp.status ? { status: sp.status as never } : {}),
     ...(responsibleId ? { responsibleId } : {}),
     ...(sp.q
-      ? { OR: [{ title: { contains: sp.q } }, { description: { contains: sp.q } }] }
+      ? { OR: [{ title: { contains: sp.q, mode: "insensitive" as const } }, { description: { contains: sp.q, mode: "insensitive" as const } }] }
       : {}),
   };
 
@@ -70,7 +70,7 @@ export default async function TasksPage({
         description={`${rows.length} записей`}
         actions={
           <>
-            <ExportButtons entity="tasks" />
+            <DataTools entity="tasks" />
             <Button href="/tasks/new" size="sm">
               + Создать
             </Button>

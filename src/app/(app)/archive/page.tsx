@@ -2,13 +2,15 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card, formatDateTime } from "@/components/layout/Page";
 import { EntityActions } from "@/components/crm/EntityActions";
-import { canHardDelete } from "@/lib/permissions";
+import { canHardDelete, canViewAll } from "@/lib/permissions";
 import { scopeWhere } from "@/lib/list-query";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function ArchivePage() {
   const session = await auth();
   if (!session?.user) return null;
+  if (!canViewAll(session.user.role)) redirect("/dashboard");
   const canDelete = canHardDelete(session.user.role);
   const scope = scopeWhere(session.user);
 

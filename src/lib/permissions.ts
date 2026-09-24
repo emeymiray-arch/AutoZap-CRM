@@ -42,6 +42,16 @@ export function canSeeAnalytics(role: Role): boolean {
   return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
 }
 
+/** Экспорт / импорт / Bitrix — администратор и руководство, не менеджеры */
+export function canExportData(role: Role): boolean {
+  return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
+}
+
+/** Настройки с созданием аккаунтов — только администратор программы */
+export function canAccessSettings(role: Role): boolean {
+  return role === "ADMIN";
+}
+
 /** Scope filter for managers: only own responsible records */
 export function responsibleScope(user: SessionUser): { responsibleId?: string } {
   if (canViewAll(user.role)) return {};

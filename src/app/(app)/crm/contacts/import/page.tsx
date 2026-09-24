@@ -4,19 +4,19 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { ImportForm } from "@/components/crm/ImportForm";
 import { canExportData } from "@/lib/permissions";
 
-export default async function ImportCompaniesPage() {
+export default async function ImportContactsPage() {
   const session = await auth();
   if (!session?.user) return null;
-  if (!canExportData(session.user.role)) redirect("/crm/companies");
+  if (!canExportData(session.user.role)) redirect("/crm/contacts");
 
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader
-        title="Импорт компаний"
+        title="Импорт контактов"
         description="CSV / XLSX. Только администратор и руководство."
       />
       <Card>
-        <ImportForm entity="companies" />
+        <ImportForm entity="contacts" />
       </Card>
     </div>
   );

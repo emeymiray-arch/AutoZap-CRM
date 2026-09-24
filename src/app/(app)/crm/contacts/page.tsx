@@ -5,7 +5,7 @@ import { PageHeader, formatDate } from "@/components/layout/Page";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { ListFilters } from "@/components/crm/ListFilters";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
 
@@ -34,10 +34,10 @@ export default async function ContactsPage({
     ...(sp.q
       ? {
           OR: [
-            { firstName: { contains: sp.q } },
-            { lastName: { contains: sp.q } },
-            { phone: { contains: sp.q } },
-            { email: { contains: sp.q } },
+            { firstName: { contains: sp.q, mode: "insensitive" as const } },
+            { lastName: { contains: sp.q, mode: "insensitive" as const } },
+            { phone: { contains: sp.q, mode: "insensitive" as const } },
+            { email: { contains: sp.q, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -57,7 +57,7 @@ export default async function ContactsPage({
         description={`${contacts.length} записей`}
         actions={
           <>
-            <ExportButtons entity="contacts" />
+            <DataTools entity="contacts" importHref="/crm/contacts/import" />
             <Button href="/crm/contacts/new" size="sm">
               + Создать
             </Button>

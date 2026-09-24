@@ -1,12 +1,14 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card, formatDateTime } from "@/components/layout/Page";
 import { ROLE_LABELS } from "@/lib/labels";
 import { Badge } from "@/components/ui/Badge";
 import { BITRIX24_INTEGRATION_TODO } from "@/lib/integrations/bitrix24/mapper";
-import { canManageUsers, SELECTABLE_ROLES } from "@/lib/permissions";
+import { canAccessSettings, SELECTABLE_ROLES } from "@/lib/permissions";
 import { createTeamUserAction } from "@/lib/actions";
 import { Input, Select } from "@/components/ui/Form";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 
 export default async function SettingsPage({
@@ -16,8 +18,9 @@ export default async function SettingsPage({
 }) {
   const session = await auth();
   if (!session?.user) return null;
+  if (!canAccessSettings(session.user.role)) redirect("/dashboard");
+
   const sp = await searchParams;
-  const canAdd = canManageUsers(session.user.role);
 
   const users = await prisma.user.findMany({
     where: { archivedAt: null },
@@ -32,21 +35,16 @@ export default async function SettingsPage({
 
   return (
     <div>
-      <PageHeader title="Настройки" description="Участники, роли, аудит, интеграции" />
+      <PageHeader title="Настройки" description="Аккаунты, роли, аудит — только для администратора программы" />
 
       {sp.added && (
         <div className="mb-4 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
-          Участник добавлен — имя сразу доступно в поле «Ответственный» при создании записей.
+          Аккаунт создан — имя сразу в списке «Ответственный». Передайте сотруднику email и пароль.
         </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="Участники и роли">
-          {!canAdd && (
-            <p className="mb-3 text-xs text-amber-700">
-              Аккаунты создаёт только администратор программы.
-            </p>
-          )}
+        <Card title="Участники">
           <ul className="mb-4 space-y-2 text-sm">
             {users.map((u) => (
               <li key={u.id} className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -59,33 +57,31 @@ export default async function SettingsPage({
             ))}
           </ul>
 
-          {canAdd && (
-            <form action={createTeamUserAction} className="space-y-3 border-t border-slate-100 pt-4">
-              <div className="text-sm font-medium text-slate-800">Создать аккаунт менеджеру / руководителю</div>
-              <p className="text-xs text-slate-500">
-                Имя обязательно — сразу появится в поле «Ответственный». Человек входит по email и паролю.
-              </p>
-              <Input name="name" label="Имя" required placeholder="Имя сотрудника" />
-              <Input name="email" label="Email" type="email" required />
-              <Input name="password" label="Пароль" type="password" required minLength={6} />
-              <Select name="role" label="Роль" required defaultValue="MANAGER">
-                {SELECTABLE_ROLES.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </Select>
-              <Button type="submit" size="sm">
-                Создать аккаунт
-              </Button>
-            </form>
-          )}
+          <form action={createTeamUserAction} className="space-y-3 border-t border-slate-100 pt-4">
+            <div className="text-sm font-medium text-slate-800">Создать аккаунт</div>
+            <p className="text-xs text-slate-500">
+              Только вы создаёте менеджеров и руководителей. Имя попадёт в «Ответственный».
+            </p>
+            <Input name="name" label="Имя" required placeholder="Имя сотрудника" />
+            <Input name="email" label="Email" type="email" required />
+            <PasswordInput name="password" label="Пароль" required minLength={6} autoComplete="new-password" />
+            <Select name="role" label="Роль" required defaultValue="MANAGER">
+              {SELECTABLE_ROLES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </Select>
+            <Button type="submit" size="sm">
+              Создать аккаунт
+            </Button>
+          </form>
         </Card>
 
         <Card title="Интеграция Bitrix24">
           <p className="text-sm text-slate-700">{BITRIX24_INTEGRATION_TODO}</p>
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600">
-            <li>Экспорт CSV/XLSX с UF_AUTOZAP_ID уже доступен</li>
+            <li>Экспорт CSV/XLSX с UF_AUTOZAP_ID — в списках CRM (у вас и у руководства)</li>
             <li>Таблица ExternalIdMap готова к сопоставлению ID</li>
             <li>REST-клиент — отдельный модуль этапа 6</li>
           </ul>

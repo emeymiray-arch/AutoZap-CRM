@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
-import { ExportButtons } from "@/components/crm/ExportButtons";
+import { DataTools } from "@/components/crm/DataTools";
 import { STORE_STATUS_LABELS } from "@/lib/labels";
 import { parseListParams, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
@@ -25,8 +25,8 @@ export default async function StoresPage({
     ...scopeWhere(session.user),
     ...(sp.status ? { status: sp.status } : {}),
     ...(sp.responsibleId ? { responsibleId: sp.responsibleId } : {}),
-    ...(sp.region ? { region: { contains: sp.region } } : {}),
-    ...(sp.q ? { OR: [{ name: { contains: sp.q } }, { storeUrl: { contains: sp.q } }] } : {}),
+    ...(sp.region ? { region: { contains: sp.region, mode: "insensitive" as const } } : {}),
+    ...(sp.q ? { OR: [{ name: { contains: sp.q, mode: "insensitive" as const } }, { storeUrl: { contains: sp.q, mode: "insensitive" as const } }] } : {}),
   };
   if (sp.filter === "processing") {
     where.status = { in: ["CREATING", "SETUP", "CATALOG_LOADING", "REVIEW"] };
@@ -43,7 +43,7 @@ export default async function StoresPage({
         title="Магазины"
         actions={
           <>
-            <ExportButtons entity="stores" />
+            <DataTools entity="stores" />
             <Button href="/stores/new" size="sm">
               + Создать
             </Button>
