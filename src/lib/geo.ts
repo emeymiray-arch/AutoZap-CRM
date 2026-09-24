@@ -233,7 +233,9 @@ export function formatCityList(cities: string[]): string | null {
 }
 
 export function citiesFromForm(formData: FormData, name: string): string | null {
-  return formatCityList(formData.getAll(name).map(String));
+  const chunks = formData.getAll(name).map(String);
+  const cities = chunks.flatMap((chunk) => parseCityList(chunk));
+  return formatCityList(cities);
 }
 
 export function withCurrentOption(list: readonly string[], current?: string | null): string[] {

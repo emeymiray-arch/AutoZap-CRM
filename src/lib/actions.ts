@@ -544,9 +544,13 @@ export async function updatePartnerAction(id: string, formData: FormData) {
   const user = await requireUser();
   const before = await prisma.partner.findUniqueOrThrow({ where: { id } });
   const newStatus = str(formData, "status") || before.status;
+  let companyId = str(formData, "companyId") || before.companyId;
+  if (!companyId) {
+    companyId = await resolveCompanyId(formData, user, str(formData, "name") || before.name);
+  }
   const data = {
     name: str(formData, "name") || before.name,
-    companyId: str(formData, "companyId"),
+    companyId,
     responsibleId: str(formData, "responsibleId") || before.responsibleId,
     status: newStatus as never,
     region: str(formData, "region"),
@@ -560,7 +564,7 @@ export async function updatePartnerAction(id: string, formData: FormData) {
   if (before.status !== newStatus) {
     await changeStatus({ entity: "partner", id, newStatus, user });
   }
-  revalidateEntity([`/partners/${id}`, "/partners", "/dashboard"]);
+  revalidateEntity([`/partners/${id}`, "/partners", "/dashboard", "/crm/companies"]);
   redirect(`/partners/${id}`);
 }
 

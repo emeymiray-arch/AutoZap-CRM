@@ -27,9 +27,9 @@ export default async function NewPartnerPage() {
           </Select>
           <RegionSelect />
           <Input name="nextContactAt" label="Следующий контакт" type="datetime-local" />
-          <MultiCityField name="warehouseCities" label="Склады — города" />
-          <MultiCityField name="productionCities" label="Производство — города" />
-          <MultiCityField name="storeCities" label="Магазины — города" />
+          <MultiCityField name="warehouseCities" label="Склады" />
+          <MultiCityField name="productionCities" label="Производство" />
+          <MultiCityField name="storeCities" label="Магазины" />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Создать</Button>

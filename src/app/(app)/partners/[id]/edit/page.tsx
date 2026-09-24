@@ -52,17 +52,17 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
           <RegionSelect defaultValue={partner.region || company?.region} />
           <MultiCityField
             name="warehouseCities"
-            label="Склады — города"
+            label="Склады"
             defaultValue={company?.warehouseCities}
           />
           <MultiCityField
             name="productionCities"
-            label="Производство — города"
+            label="Производство"
             defaultValue={company?.productionCities}
           />
           <MultiCityField
             name="storeCities"
-            label="Магазины — города"
+            label="Магазины"
             defaultValue={company?.storeCities}
           />
           <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} className="md:col-span-2" />

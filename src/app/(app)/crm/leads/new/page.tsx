@@ -32,9 +32,9 @@ export default async function NewLeadPage() {
           <Input name="email" label="Email" type="email" />
           <CitySelect />
           <RegionSelect />
-          <MultiCityField name="warehouseCities" label="Склады — города" />
-          <MultiCityField name="productionCities" label="Производство — города" />
-          <MultiCityField name="storeCities" label="Магазины — города" />
+          <MultiCityField name="warehouseCities" label="Склады" />
+          <MultiCityField name="productionCities" label="Производство" />
+          <MultiCityField name="storeCities" label="Магазины" />
           <Input name="source" label="Источник" />
           <Input name="website" label="Сайт" />
           <Input name="avito" label="Avito" />

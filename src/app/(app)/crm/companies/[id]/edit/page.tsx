@@ -28,17 +28,17 @@ export default async function EditCompanyPage({ params }: { params: Promise<{ id
           <RegionSelect defaultValue={company.region} />
           <MultiCityField
             name="warehouseCities"
-            label="Склады — города"
+            label="Склады"
             defaultValue={company.warehouseCities}
           />
           <MultiCityField
             name="productionCities"
-            label="Производство — города"
+            label="Производство"
             defaultValue={company.productionCities}
           />
           <MultiCityField
             name="storeCities"
-            label="Магазины — города"
+            label="Магазины"
             defaultValue={company.storeCities}
           />
           <Input name="address" label="Адрес" defaultValue={company.address || ""} className="md:col-span-2" />
