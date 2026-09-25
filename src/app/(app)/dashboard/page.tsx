@@ -47,9 +47,12 @@ export default async function DashboardPage() {
     prisma.lead.count({ where: { archivedAt: null, status: "AGREED" } }),
     prisma.lead.count({ where: { archivedAt: null, status: "REGISTRATION" } }),
     prisma.store.count({
-      where: { archivedAt: null, status: { in: ["CREATING", "SETUP", "CATALOG_LOADING", "REVIEW"] } },
+      where: {
+        archivedAt: null,
+        status: { in: ["NEW", "CONTACTED", "ANSWERED", "INTERESTED", "PROPOSAL_SENT", "AGREED"] },
+      },
     }),
-    prisma.store.count({ where: { archivedAt: null, status: "PUBLISHED" } }),
+    prisma.store.count({ where: { archivedAt: null, status: "ACTIVE" } }),
     prisma.partner.count({ where: { archivedAt: null, status: "ACTIVE" } }),
     prisma.task.count({
       where: {
@@ -93,9 +96,9 @@ export default async function DashboardPage() {
         {await kpi("/crm/leads?status=PROPOSAL_SENT", "КП отправлено", proposalSent)}
         {await kpi("/crm/leads?status=AGREED", "Согласились", agreed)}
         {await kpi("/crm/leads?status=REGISTRATION", "Регистрации", registrations)}
-        {await kpi("/stores?filter=processing", "Магазины в обработке", storesProcessing)}
-        {await kpi("/stores?status=PUBLISHED", "Опубликованные магазины", storesPublished)}
-        {await kpi("/partners?status=ACTIVE", "Активные партнёры", activePartners)}
+        {await kpi("/stores?view=funnel", "Магазины в работе", storesProcessing)}
+        {await kpi("/stores?status=ACTIVE", "Активные магазины", storesPublished)}
+        {await kpi("/partners?view=funnel", "Активные партнёры", activePartners)}
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
@@ -130,8 +133,8 @@ export default async function DashboardPage() {
         <Card title="Операционный блок">
           <ul className="space-y-2 text-sm">
             <li className="flex justify-between">
-              <Link href="/stores?filter=processing" className="hover:underline">
-                Магазины в обработке
+              <Link href="/stores?view=funnel" className="hover:underline">
+                Магазины в работе
               </Link>
               <span className="font-semibold">{storesProcessing}</span>
             </li>

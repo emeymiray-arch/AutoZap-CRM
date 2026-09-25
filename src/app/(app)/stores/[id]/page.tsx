@@ -8,10 +8,10 @@ import { Input, Select, Textarea } from "@/components/ui/Form";
 import { EntityActions } from "@/components/crm/EntityActions";
 import { ActivityFeed } from "@/components/crm/ActivityFeed";
 import { AuditPanel } from "@/components/crm/AuditPanel";
-import { STORE_STATUS_LABELS } from "@/lib/labels";
+import { STORE_FUNNEL_ORDER, STORE_STATUS_LABELS } from "@/lib/labels";
 import { canHardDelete } from "@/lib/permissions";
 import { updateStoreAction } from "@/lib/actions";
-import { companiesForSelect, partnersForSelect, usersForSelect } from "@/lib/list-query";
+import { usersForSelect } from "@/lib/list-query";
 import { RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function StoreDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,21 +20,20 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const store = await prisma.store.findUnique({
     where: { id },
-    include: { partner: true, company: true, responsible: true },
+    include: { responsible: true },
   });
   if (!store) notFound();
-  const [companies, partners, users] = await Promise.all([
-    companiesForSelect(),
-    partnersForSelect(),
-    usersForSelect(),
-  ]);
+  const users = await usersForSelect();
   const action = updateStoreAction.bind(null, id);
+  const statusOptions = STORE_FUNNEL_ORDER.includes(store.status as never)
+    ? [...STORE_FUNNEL_ORDER]
+    : [store.status, ...STORE_FUNNEL_ORDER];
 
   return (
     <div>
       <PageHeader
         title={store.name}
-        description={`ID: ${store.id}`}
+        description="Мелкий магазин"
         actions={
           <EntityActions
             entity="store"
@@ -48,39 +47,17 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
       />
       <Badge status={store.status}>{STORE_STATUS_LABELS[store.status] || store.status}</Badge>
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <Card title="Карточка / изменение" className="lg:col-span-2">
+        <Card title="Карточка" className="lg:col-span-2">
           <form action={action} className="grid gap-3 md:grid-cols-2">
             <Input name="name" label="Название" required defaultValue={store.name} className="md:col-span-2" />
-            <Select name="partnerId" label="Партнёр" defaultValue={store.partnerId || ""}>
-              <option value="">—</option>
-              {partners.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
-            <Select name="companyId" label="Компания" defaultValue={store.companyId || ""}>
-              <option value="">—</option>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
             <RegionSelect defaultValue={store.region} />
-            <Select name="status" label="Статус" defaultValue={store.status}>
-              {Object.entries(STORE_STATUS_LABELS).map(([k, v]) => (
+            <Select name="status" label="Этап" defaultValue={store.status}>
+              {statusOptions.map((k) => (
                 <option key={k} value={k}>
-                  {v}
+                  {STORE_STATUS_LABELS[k] || k}
                 </option>
               ))}
             </Select>
-            <Input
-              name="productCount"
-              label="Товары"
-              type="number"
-              defaultValue={store.productCount ?? undefined}
-            />
             <Input name="storeUrl" label="Ссылка" defaultValue={store.storeUrl || ""} />
             <Select name="responsibleId" label="Ответственный" defaultValue={store.responsibleId || ""}>
               {users.map((u) => (
@@ -91,8 +68,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
             </Select>
             <Textarea name="comment" label="Комментарий" defaultValue={store.comment || ""} className="md:col-span-2" />
             <div className="md:col-span-2 text-xs text-slate-500">
-              Регистрация: {formatDateTime(store.registeredAt)} · Публикация:{" "}
-              {formatDateTime(store.publishedAt)} · Активация: {formatDateTime(store.activatedAt)}
+              Создан: {formatDateTime(store.createdAt)}
             </div>
             <div className="md:col-span-2">
               <Button type="submit" size="sm">
@@ -102,10 +78,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
           </form>
         </Card>
         <Card title="Активности">
-          <ActivityFeed
-            where={{ storeId: store.id, partnerId: store.partnerId, companyId: store.companyId }}
-            redirectTo={`/stores/${id}`}
-          />
+          <ActivityFeed where={{ storeId: store.id }} redirectTo={`/stores/${id}`} />
         </Card>
       </div>
       <div className="mt-4">

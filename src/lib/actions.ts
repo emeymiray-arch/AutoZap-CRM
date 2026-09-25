@@ -190,6 +190,38 @@ export async function createCompanyAction(formData: FormData): Promise<void> {
   }
 
   const company = await prisma.company.create({ data });
+
+  // Компания = партнёр + запись в сделках (для видимости; суммы пока не ведутся)
+  const existingPartner = await prisma.partner.findFirst({
+    where: { archivedAt: null, companyId: company.id },
+  });
+  if (!existingPartner) {
+    await prisma.partner.create({
+      data: {
+        name: company.name,
+        companyId: company.id,
+        responsibleId: company.responsibleId || user.id,
+        status: "NEW",
+        region: company.region,
+        createdById: user.id,
+      },
+    });
+  }
+  const existingDeal = await prisma.deal.findFirst({
+    where: { archivedAt: null, companyId: company.id },
+  });
+  if (!existingDeal) {
+    await prisma.deal.create({
+      data: {
+        title: company.name,
+        companyId: company.id,
+        responsibleId: company.responsibleId || user.id,
+        stage: "NEW",
+        createdById: user.id,
+      },
+    });
+  }
+
   await writeAudit({
     userId: user.id,
     entityType: "company",
@@ -204,7 +236,7 @@ export async function createCompanyAction(formData: FormData): Promise<void> {
     comment: `Создана компания ${company.name}`,
     companyId: company.id,
   });
-  revalidateEntity(["/crm/companies", "/dashboard"]);
+  revalidateEntity(["/crm/companies", "/partners", "/crm/deals", "/dashboard"]);
   redirect(`/crm/companies/${company.id}`);
 }
 
@@ -491,8 +523,8 @@ export async function createDealAction(formData: FormData) {
   const user = await requireUser();
   const title = str(formData, "title") || "";
   if (!title) throw new Error("Название обязательно");
-  // Сделка = компания: название сделки попадает в список компаний
-  const companyId = await ensureCompanyMirror(formData, user, title);
+  // Сделки пока независимы — компанию только если явно указали
+  const companyId = await resolveCompanyId(formData, user);
   const data = {
     title,
     companyId,
@@ -523,7 +555,7 @@ export async function createDealAction(formData: FormData) {
     companyId: deal.companyId,
     dealId: deal.id,
   });
-  revalidateEntity(["/crm/deals", "/funnel", "/dashboard", "/crm/companies"]);
+  revalidateEntity(["/crm/deals", "/funnel", "/dashboard"]);
   redirect(`/crm/deals/${deal.id}`);
 }
 
@@ -691,13 +723,12 @@ export async function updateCatalogAction(id: string, formData: FormData) {
 
 export async function createStoreAction(formData: FormData) {
   const user = await requireUser();
-  const companyId = await resolveCompanyId(formData, user);
   const data = {
     name: str(formData, "name") || "",
-    companyId,
-    partnerId: str(formData, "partnerId"),
+    companyId: null as string | null,
+    partnerId: null as string | null,
     region: str(formData, "region"),
-    status: (str(formData, "status") || "CREATING") as never,
+    status: (str(formData, "status") || "NEW") as never,
     productCount: num(formData, "productCount"),
     responsibleId: str(formData, "responsibleId") || user.id,
     storeUrl: str(formData, "storeUrl"),
@@ -719,8 +750,6 @@ export async function createStoreAction(formData: FormData) {
     type: "CREATE",
     authorId: user.id,
     comment: `Создан магазин ${store.name}`,
-    companyId: store.companyId,
-    partnerId: store.partnerId,
     storeId: store.id,
   });
   revalidateEntity(["/stores", "/dashboard"]);
@@ -733,8 +762,8 @@ export async function updateStoreAction(id: string, formData: FormData) {
   const newStatus = str(formData, "status") || before.status;
   const data = {
     name: str(formData, "name") || before.name,
-    companyId: str(formData, "companyId"),
-    partnerId: str(formData, "partnerId"),
+    companyId: null as string | null,
+    partnerId: null as string | null,
     region: str(formData, "region"),
     status: newStatus as never,
     productCount: num(formData, "productCount"),
@@ -742,7 +771,9 @@ export async function updateStoreAction(id: string, formData: FormData) {
     storeUrl: str(formData, "storeUrl"),
     comment: str(formData, "comment"),
     publishedAt:
-      newStatus === "PUBLISHED" && !before.publishedAt ? new Date() : before.publishedAt,
+      (newStatus === "PUBLISHED" || newStatus === "ACTIVE") && !before.publishedAt
+        ? new Date()
+        : before.publishedAt,
     activatedAt:
       newStatus === "ACTIVE" && !before.activatedAt ? new Date() : before.activatedAt,
   };
@@ -753,6 +784,20 @@ export async function updateStoreAction(id: string, formData: FormData) {
   }
   revalidateEntity([`/stores/${id}`, "/stores", "/dashboard"]);
   redirect(`/stores/${id}`);
+}
+
+export async function movePartnerStatusAction(partnerId: string, status: string) {
+  const user = await requireUser();
+  await changeStatus({ entity: "partner", id: partnerId, newStatus: status, user });
+  revalidateEntity(["/partners", `/partners/${partnerId}`, "/dashboard"]);
+  return { ok: true };
+}
+
+export async function moveStoreStatusAction(storeId: string, status: string) {
+  const user = await requireUser();
+  await changeStatus({ entity: "store", id: storeId, newStatus: status, user });
+  revalidateEntity(["/stores", `/stores/${storeId}`, "/dashboard"]);
+  return { ok: true };
 }
 
 // ─── Tasks / Activities ─────────────────────────────────────

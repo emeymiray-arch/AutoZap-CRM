@@ -5,21 +5,21 @@ import { Button } from "@/components/ui/Button";
 import { createPartnerAction } from "@/lib/actions";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
-import { PARTNER_STATUS_LABELS } from "@/lib/labels";
+import { PARTNER_FUNNEL_ORDER, PARTNER_STATUS_LABELS } from "@/lib/labels";
 
 export default async function NewPartnerPage() {
   await auth();
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Новый партнёр" description="Партнёр автоматически появится в списке компаний" />
+      <PageHeader title="Новый партнёр" description="Появится также в списке компаний" />
       <Card>
         <form action={createPartnerAction} className="grid gap-3 md:grid-cols-2">
           <Input name="name" label="Название" required className="md:col-span-2" />
           <ResponsibleSelect />
-          <Select name="status" label="Статус" defaultValue="NEW">
-            {Object.entries(PARTNER_STATUS_LABELS).map(([k, v]) => (
+          <Select name="status" label="Этап воронки" defaultValue="NEW">
+            {PARTNER_FUNNEL_ORDER.map((k) => (
               <option key={k} value={k}>
-                {v}
+                {PARTNER_STATUS_LABELS[k]}
               </option>
             ))}
           </Select>

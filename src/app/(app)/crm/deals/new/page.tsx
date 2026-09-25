@@ -6,7 +6,6 @@ import { createDealAction } from "@/lib/actions";
 import { contactsForSelect } from "@/lib/list-query";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { CompanyField } from "@/components/crm/CompanyField";
-import { MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 import { DEAL_STAGE_LABELS } from "@/lib/labels";
 
 export default async function NewDealPage() {
@@ -15,12 +14,11 @@ export default async function NewDealPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Новая сделка" />
+      <PageHeader title="Новая сделка" description="Пока без обязательной связи с компанией" />
       <Card>
         <form action={createDealAction} className="grid gap-3 md:grid-cols-2">
           <Input name="title" label="Название" required className="md:col-span-2" />
-          <CompanyField hint="Если пусто — компания создастся по названию сделки" />
-          <RegionSelect />
+          <CompanyField hint="Необязательно" />
           <Select name="contactId" label="Контакт">
             <option value="">—</option>
             {contacts.map((c) => (
@@ -41,9 +39,6 @@ export default async function NewDealPage() {
           <Input name="nextStep" label="Следующий шаг" />
           <Input name="deadline" label="Дедлайн" type="datetime-local" />
           <ResponsibleSelect />
-          <MultiCityField name="warehouseCities" label="Склады" />
-          <MultiCityField name="productionCities" label="Производство" />
-          <MultiCityField name="storeCities" label="Магазины" />
           <Textarea name="comment" label="Комментарий" className="md:col-span-2" />
           <div className="md:col-span-2">
             <Button type="submit">Создать сделку</Button>

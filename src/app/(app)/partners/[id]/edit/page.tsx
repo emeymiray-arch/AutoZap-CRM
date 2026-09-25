@@ -6,7 +6,7 @@ import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { updatePartnerAction } from "@/lib/actions";
 import { usersForSelect } from "@/lib/list-query";
-import { PARTNER_STATUS_LABELS } from "@/lib/labels";
+import { PARTNER_FUNNEL_ORDER, PARTNER_STATUS_LABELS } from "@/lib/labels";
 import { MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditPartnerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +20,9 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
   const users = await usersForSelect();
   const action = updatePartnerAction.bind(null, id);
   const company = partner.company;
+  const statusOptions = PARTNER_FUNNEL_ORDER.includes(partner.status as never)
+    ? [...PARTNER_FUNNEL_ORDER]
+    : [partner.status, ...PARTNER_FUNNEL_ORDER];
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -34,10 +37,10 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
               </option>
             ))}
           </Select>
-          <Select name="status" label="Статус" defaultValue={partner.status}>
-            {Object.entries(PARTNER_STATUS_LABELS).map(([k, v]) => (
+          <Select name="status" label="Этап воронки" defaultValue={partner.status}>
+            {statusOptions.map((k) => (
               <option key={k} value={k}>
-                {v}
+                {PARTNER_STATUS_LABELS[k] || k}
               </option>
             ))}
           </Select>

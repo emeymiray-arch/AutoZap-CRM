@@ -27,7 +27,16 @@ export const DEAL_STAGE_LABELS: Record<string, string> = {
 };
 
 export const PARTNER_STATUS_LABELS: Record<string, string> = {
-  NEW: "Новый",
+  NEW: "Написали",
+  CONTACTED: "Связались",
+  ANSWERED: "Ответили",
+  INFO_REQUESTED: "Запросили информацию",
+  PROPOSAL_SENT: "Отправили КП",
+  NEGOTIATION: "Переговоры",
+  AGREED: "Согласие",
+  ACTIVE: "Партнёр",
+  REJECTED: "Отказ",
+  // старые статусы (для уже существующих записей)
   REGISTRATION: "Регистрация",
   WAITING_CATALOG: "Ожидаем каталог",
   CATALOG_RECEIVED: "Каталог получен",
@@ -36,11 +45,55 @@ export const PARTNER_STATUS_LABELS: Record<string, string> = {
   STORE_PROCESSING: "Магазин в обработке",
   READY_TO_PUBLISH: "Готов к публикации",
   PUBLISHED: "Опубликован",
-  ACTIVE: "Активен",
   NEEDS_ATTENTION: "Требует внимания",
   SUSPENDED: "Приостановлен",
   ARCHIVED: "Архив",
 };
+
+/** Воронка привлечения крупных компаний / партнёров */
+export const PARTNER_FUNNEL_ORDER = [
+  "NEW",
+  "CONTACTED",
+  "ANSWERED",
+  "INFO_REQUESTED",
+  "PROPOSAL_SENT",
+  "NEGOTIATION",
+  "AGREED",
+  "ACTIVE",
+  "REJECTED",
+] as const;
+
+export const STORE_STATUS_LABELS: Record<string, string> = {
+  NEW: "Новый",
+  CONTACTED: "Связались",
+  ANSWERED: "Ответили",
+  INTERESTED: "Заинтересованы",
+  PROPOSAL_SENT: "КП",
+  AGREED: "Согласие",
+  ACTIVE: "Активен",
+  REJECTED: "Отказ",
+  // старые
+  CREATING: "Создание",
+  SETUP: "Настройка",
+  CATALOG_LOADING: "Каталог загружается",
+  REVIEW: "Проверка",
+  READY: "Готов",
+  PUBLISHED: "Опубликован",
+  SUSPENDED: "Приостановлен",
+  ARCHIVED: "Архив",
+};
+
+/** Воронка мелких магазинов */
+export const STORE_FUNNEL_ORDER = [
+  "NEW",
+  "CONTACTED",
+  "ANSWERED",
+  "INTERESTED",
+  "PROPOSAL_SENT",
+  "AGREED",
+  "ACTIVE",
+  "REJECTED",
+] as const;
 
 export const CATALOG_STATUS_LABELS: Record<string, string> = {
   EXPECTED: "Ожидается",
@@ -51,18 +104,6 @@ export const CATALOG_STATUS_LABELS: Record<string, string> = {
   READY: "Готов",
   SENT_TO_UPLOAD: "Передан на загрузку",
   UPLOADED: "Загружен",
-};
-
-export const STORE_STATUS_LABELS: Record<string, string> = {
-  CREATING: "Создание",
-  SETUP: "Настройка",
-  CATALOG_LOADING: "Каталог загружается",
-  REVIEW: "Проверка",
-  READY: "Готов",
-  PUBLISHED: "Опубликован",
-  ACTIVE: "Активен",
-  SUSPENDED: "Приостановлен",
-  ARCHIVED: "Архив",
 };
 
 export const TASK_STATUS_LABELS: Record<string, string> = {
@@ -128,11 +169,46 @@ export const LEAD_FUNNEL_STAGES = [
   "CONVERTED",
 ] as const;
 
+/** Старые статусы партнёра → колонка воронки */
+export function partnerFunnelStage(status: string): string {
+  if ((PARTNER_FUNNEL_ORDER as readonly string[]).includes(status)) return status;
+  const map: Record<string, string> = {
+    REGISTRATION: "AGREED",
+    WAITING_CATALOG: "ACTIVE",
+    CATALOG_RECEIVED: "ACTIVE",
+    CATALOG_REVIEW: "ACTIVE",
+    CATALOG_UPLOAD: "ACTIVE",
+    STORE_PROCESSING: "ACTIVE",
+    READY_TO_PUBLISH: "ACTIVE",
+    PUBLISHED: "ACTIVE",
+    NEEDS_ATTENTION: "NEGOTIATION",
+    SUSPENDED: "REJECTED",
+    ARCHIVED: "REJECTED",
+  };
+  return map[status] || "NEW";
+}
+
+/** Старые статусы магазина → колонка воронки */
+export function storeFunnelStage(status: string): string {
+  if ((STORE_FUNNEL_ORDER as readonly string[]).includes(status)) return status;
+  const map: Record<string, string> = {
+    CREATING: "NEW",
+    SETUP: "CONTACTED",
+    CATALOG_LOADING: "INTERESTED",
+    REVIEW: "PROPOSAL_SENT",
+    READY: "AGREED",
+    PUBLISHED: "ACTIVE",
+    SUSPENDED: "REJECTED",
+    ARCHIVED: "REJECTED",
+  };
+  return map[status] || "NEW";
+}
+
 export function statusTone(status: string): "success" | "warning" | "error" | "neutral" | "info" {
   const s = status.toUpperCase();
-  if (["WON", "DONE", "ACTIVE", "PUBLISHED", "CONVERTED", "UPLOADED", "READY"].includes(s)) return "success";
+  if (["WON", "DONE", "ACTIVE", "PUBLISHED", "CONVERTED", "UPLOADED", "READY", "AGREED"].includes(s)) return "success";
   if (["OVERDUE", "LOST", "REJECTED", "ERRORS", "NOT_SUITABLE"].includes(s)) return "error";
   if (["NEEDS_ATTENTION", "SUSPENDED", "NO_ANSWER", "FIXING", "DEFERRED"].includes(s)) return "warning";
-  if (["NEW", "EXPECTED", "CREATING"].includes(s)) return "info";
+  if (["NEW", "EXPECTED", "CREATING", "CONTACTED"].includes(s)) return "info";
   return "neutral";
 }

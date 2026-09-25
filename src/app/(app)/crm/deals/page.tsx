@@ -57,9 +57,6 @@ export default async function DealsPage({
         actions={
           <>
             <DataTools entity="deals" />
-            <Button href="/funnel" variant="secondary" size="sm">
-              Воронка
-            </Button>
             <Button href="/crm/deals/new" size="sm">
               + Создать
             </Button>

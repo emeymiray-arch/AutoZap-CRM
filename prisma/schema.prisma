@@ -273,7 +273,7 @@ model Store {
   companyId     String?
   partnerId     String?
   region        String?
-  status        String      @default("CREATING")
+  status        String      @default("NEW")
   productCount  Int?
   registeredAt  DateTime?
   publishedAt   DateTime?

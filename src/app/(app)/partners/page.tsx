@@ -7,7 +7,13 @@ import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { ListFilters } from "@/components/crm/ListFilters";
 import { DataTools } from "@/components/crm/DataTools";
-import { PARTNER_STATUS_LABELS } from "@/lib/labels";
+import { ViewTabs } from "@/components/crm/ViewTabs";
+import { PartnerKanban } from "@/components/kanban/PartnerKanban";
+import {
+  PARTNER_FUNNEL_ORDER,
+  PARTNER_STATUS_LABELS,
+  partnerFunnelStage,
+} from "@/lib/labels";
 import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
 import { startOfDay, endOfDay } from "date-fns";
@@ -19,7 +25,9 @@ export default async function PartnersPage({
 }) {
   const session = await auth();
   if (!session?.user) return null;
-  const sp = parseListParams(await searchParams);
+  const raw = await searchParams;
+  const sp = parseListParams(raw);
+  const view = typeof raw.view === "string" && raw.view === "funnel" ? "funnel" : "cards";
   const users = await usersForSelect();
   const savedFilters = await prisma.savedFilter.findMany({
     where: { userId: session.user.id, entityType: "partners" },
@@ -33,7 +41,12 @@ export default async function PartnersPage({
     ...(sp.region ? { region: { contains: sp.region, mode: "insensitive" as const } } : {}),
     ...(dateRange(sp.from, sp.to) ? { createdAt: dateRange(sp.from, sp.to) } : {}),
     ...(sp.q
-      ? { OR: [{ name: { contains: sp.q, mode: "insensitive" as const } }, { region: { contains: sp.q, mode: "insensitive" as const } }] }
+      ? {
+          OR: [
+            { name: { contains: sp.q, mode: "insensitive" as const } },
+            { region: { contains: sp.q, mode: "insensitive" as const } },
+          ],
+        }
       : {}),
   };
 
@@ -45,67 +58,86 @@ export default async function PartnersPage({
     where,
     include: { company: true, responsible: true },
     orderBy: { updatedAt: "desc" },
-    take: 200,
+    take: 500,
   });
+
+  const funnelItems = rows.map((r) => ({
+    id: r.id,
+    title: r.name,
+    stage: partnerFunnelStage(r.status),
+    subtitle: r.company?.name && r.company.name !== r.name ? r.company.name : r.region,
+    meta: r.responsible?.name || null,
+  }));
 
   return (
     <div>
       <PageHeader
         title="Партнёры"
-        description={`${rows.length} записей`}
+        description={`${rows.length} записей · крупные компании`}
         actions={
           <>
             <DataTools entity="partners" />
-            <Button href="/partners/new" size="sm">+ Создать</Button>
+            <Button href="/partners/new" size="sm">
+              + Создать
+            </Button>
           </>
         }
       />
       <Suspense>
-        <ListFilters
-          entityType="partners"
-          users={users}
-          savedFilters={savedFilters}
-          showRegion
-          statusOptions={Object.entries(PARTNER_STATUS_LABELS).map(([value, label]) => ({ value, label }))}
-        />
+        <ViewTabs />
       </Suspense>
-      <div className="mb-2 flex gap-2">
-        <Button href="/partners?status=WAITING_CATALOG" variant="ghost" size="sm">Ожидаем каталог</Button>
-        <Button href="/partners?filter=contact_today" variant="ghost" size="sm">Контакт сегодня</Button>
-      </div>
-      <DataTable
-        rows={rows}
-        href={(r) => `/partners/${r.id}`}
-        columns={[
-          { key: "name", header: "Название", render: (r) => r.name },
-          { key: "company", header: "Компания", render: (r) => r.company?.name || "—" },
-          { key: "region", header: "Регион", render: (r) => r.region || r.company?.region || "—" },
-          {
-            key: "production",
-            header: "Производство",
-            render: (r) => r.company?.productionCities || "—",
-          },
-          {
-            key: "warehouses",
-            header: "Склады",
-            render: (r) => r.company?.warehouseCities || "—",
-          },
-          {
-            key: "stores",
-            header: "Магазины",
-            render: (r) => r.company?.storeCities || "—",
-          },
-          {
-            key: "status",
-            header: "Статус",
-            render: (r) => (
-              <Badge status={r.status}>{PARTNER_STATUS_LABELS[r.status] || r.status}</Badge>
-            ),
-          },
-          { key: "resp", header: "Ответственный", render: (r) => r.responsible?.name || "—" },
-          { key: "updated", header: "Изменён", render: (r) => formatDate(r.updatedAt) },
-        ]}
-      />
+
+      {view === "funnel" ? (
+        <PartnerKanban items={funnelItems} />
+      ) : (
+        <>
+          <Suspense>
+            <ListFilters
+              entityType="partners"
+              users={users}
+              savedFilters={savedFilters}
+              showRegion
+              statusOptions={PARTNER_FUNNEL_ORDER.map((value) => ({
+                value,
+                label: PARTNER_STATUS_LABELS[value],
+              }))}
+            />
+          </Suspense>
+          <div className="mb-2 flex gap-2">
+            <Button href="/partners?filter=contact_today" variant="ghost" size="sm">
+              Контакт сегодня
+            </Button>
+          </div>
+          <DataTable
+            rows={rows}
+            href={(r) => `/partners/${r.id}`}
+            columns={[
+              { key: "name", header: "Название", render: (r) => r.name },
+              { key: "company", header: "Компания", render: (r) => r.company?.name || "—" },
+              { key: "region", header: "Регион", render: (r) => r.region || r.company?.region || "—" },
+              {
+                key: "production",
+                header: "Производство",
+                render: (r) => r.company?.productionCities || "—",
+              },
+              {
+                key: "warehouses",
+                header: "Склады",
+                render: (r) => r.company?.warehouseCities || "—",
+              },
+              {
+                key: "status",
+                header: "Этап",
+                render: (r) => (
+                  <Badge status={r.status}>{PARTNER_STATUS_LABELS[r.status] || r.status}</Badge>
+                ),
+              },
+              { key: "resp", header: "Ответственный", render: (r) => r.responsible?.name || "—" },
+              { key: "updated", header: "Изменён", render: (r) => formatDate(r.updatedAt) },
+            ]}
+          />
+        </>
+      )}
     </div>
   );
 }
