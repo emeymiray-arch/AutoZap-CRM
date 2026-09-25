@@ -72,3 +72,38 @@ export async function contactsForSelect(companyId?: string) {
     take: 500,
   });
 }
+
+/**
+ * Компании = партнёры: любая компания без партнёра появляется в списке
+ * на начальном этапе воронки (NEW), дальше двигает человек.
+ */
+export async function syncCompaniesIntoPartners() {
+  const orphanCompanies = await prisma.company.findMany({
+    where: {
+      archivedAt: null,
+      partners: { none: { archivedAt: null } },
+    },
+    select: {
+      id: true,
+      name: true,
+      region: true,
+      responsibleId: true,
+      createdById: true,
+    },
+  });
+
+  for (const c of orphanCompanies) {
+    await prisma.partner.create({
+      data: {
+        name: c.name,
+        companyId: c.id,
+        status: "NEW",
+        region: c.region,
+        responsibleId: c.responsibleId,
+        createdById: c.createdById,
+      },
+    });
+  }
+
+  return orphanCompanies.length;
+}
