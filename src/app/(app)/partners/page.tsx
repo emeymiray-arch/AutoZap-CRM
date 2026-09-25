@@ -58,7 +58,7 @@ export default async function PartnersPage({
 
   const rows = await prisma.partner.findMany({
     where,
-    include: { company: true, responsible: true },
+    include: { company: true, contact: true, responsible: true },
     orderBy: { updatedAt: "desc" },
     take: 500,
   });
@@ -67,7 +67,9 @@ export default async function PartnersPage({
     id: r.id,
     title: r.name,
     stage: partnerFunnelStage(r.status),
-    subtitle: r.company?.name && r.company.name !== r.name ? r.company.name : r.region,
+    subtitle: r.contact
+      ? [r.contact.firstName, r.contact.lastName].filter(Boolean).join(" ")
+      : r.region,
     meta: r.responsible?.name || null,
   }));
 
@@ -115,7 +117,15 @@ export default async function PartnersPage({
             href={(r) => `/partners/${r.id}`}
             columns={[
               { key: "name", header: "Название", render: (r) => r.name },
-              { key: "company", header: "Компания", render: (r) => r.company?.name || "—" },
+              {
+                key: "contact",
+                header: "Контакт",
+                render: (r) =>
+                  r.contact
+                    ? [r.contact.firstName, r.contact.lastName].filter(Boolean).join(" ") +
+                      (r.contact.position ? ` · ${r.contact.position}` : "")
+                    : "—",
+              },
               { key: "region", header: "Регион", render: (r) => r.region || r.company?.region || "—" },
               {
                 key: "production",

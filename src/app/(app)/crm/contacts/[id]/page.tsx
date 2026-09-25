@@ -18,7 +18,11 @@ export default async function ContactDetailPage({
   const { id } = await params;
   const contact = await prisma.contact.findUnique({
     where: { id },
-    include: { company: true, responsible: true },
+    include: {
+      company: true,
+      responsible: true,
+      partners: { where: { archivedAt: null }, select: { id: true, name: true } },
+    },
   });
   if (!contact) notFound();
 
@@ -45,12 +49,14 @@ export default async function ContactDetailPage({
             {[
               ["Должность", contact.position],
               [
-                "Компания",
-                contact.company ? (
-                  <Button href={`/crm/companies/${contact.company.id}`} variant="ghost" size="sm">
-                    {contact.company.name}
-                  </Button>
-                ) : null,
+                "Партнёры",
+                contact.partners.length
+                  ? contact.partners.map((p) => (
+                      <Button key={p.id} href={`/partners/${p.id}`} variant="ghost" size="sm">
+                        {p.name}
+                      </Button>
+                    ))
+                  : null,
               ],
               ["Телефон", contact.phone],
               ["Email", contact.email],

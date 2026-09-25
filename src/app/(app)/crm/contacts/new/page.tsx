@@ -1,20 +1,22 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
-import { Input, Textarea } from "@/components/ui/Form";
+import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createContactAction } from "@/lib/actions";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { CompanyField } from "@/components/crm/CompanyField";
+import { partnersForSelect } from "@/lib/list-query";
 import Link from "next/link";
 
 export default async function NewContactPage({
   searchParams,
 }: {
-  searchParams: Promise<{ duplicateOf?: string }>;
+  searchParams: Promise<{ duplicateOf?: string; partnerId?: string }>;
 }) {
   await auth();
   const sp = await searchParams;
+  const partners = await partnersForSelect();
   const dupIds = sp.duplicateOf?.split(",").filter(Boolean) || [];
   const dups =
     dupIds.length > 0
@@ -23,7 +25,7 @@ export default async function NewContactPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Новый контакт" />
+      <PageHeader title="Новый контакт" description="Можно привязать к партнёру как должностное лицо" />
       {dups.length > 0 && (
         <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm">
           <div className="font-semibold text-amber-900">Возможно, объект уже существует</div>
@@ -45,6 +47,14 @@ export default async function NewContactPage({
           <Input name="lastName" label="Фамилия" />
           <Input name="position" label="Должность" />
           <CompanyField />
+          <Select name="partnerId" label="Партнёр" defaultValue={sp.partnerId || ""}>
+            <option value="">—</option>
+            {partners.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
           <Input name="phone" label="Телефон" />
           <Input name="email" label="Email" type="email" />
           <Input name="telegram" label="Telegram" />

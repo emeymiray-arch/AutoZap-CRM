@@ -117,6 +117,7 @@ model Contact {
   responsible User?    @relation("ContactResponsible", fields: [responsibleId], references: [id])
   leads       Lead[]
   deals       Deal[]
+  partners    Partner[]
   tasks       Task[]
   activities  Activity[]
 
@@ -205,6 +206,7 @@ model Partner {
   id              String         @id @default(uuid())
   name            String
   companyId       String?
+  contactId       String?
   leadId          String?        @unique
   responsibleId   String?
   status          String         @default("NEW")
@@ -220,6 +222,7 @@ model Partner {
   createdById     String?
 
   company     Company?  @relation(fields: [companyId], references: [id])
+  contact     Contact?  @relation(fields: [contactId], references: [id])
   lead        Lead?     @relation(fields: [leadId], references: [id])
   responsible User?     @relation("PartnerResponsible", fields: [responsibleId], references: [id])
   catalogs    Catalog[]
@@ -229,6 +232,7 @@ model Partner {
 
   @@index([status])
   @@index([responsibleId])
+  @@index([contactId])
   @@index([archivedAt])
 }
 

@@ -68,7 +68,7 @@ export async function contactsForSelect(companyId?: string) {
   return prisma.contact.findMany({
     where: { archivedAt: null, ...(companyId ? { companyId } : {}) },
     orderBy: { firstName: "asc" },
-    select: { id: true, firstName: true, lastName: true, companyId: true },
+    select: { id: true, firstName: true, lastName: true, companyId: true, position: true, phone: true },
     take: 500,
   });
 }

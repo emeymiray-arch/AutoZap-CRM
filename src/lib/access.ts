@@ -101,6 +101,7 @@ export const CREATE_ALLOWLIST: Record<string, string[]> = {
   partners: [
     "name",
     "companyId",
+    "contactId",
     "leadId",
     "responsibleId",
     "status",

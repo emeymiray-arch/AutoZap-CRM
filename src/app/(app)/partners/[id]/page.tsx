@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card, formatDateTime } from "@/components/layout/Page";
@@ -16,15 +17,18 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const partner = await prisma.partner.findUnique({
     where: { id },
-    include: { company: true, responsible: true },
+    include: { company: true, contact: true, responsible: true },
   });
   if (!partner) notFound();
+  const contactLabel = partner.contact
+    ? [partner.contact.firstName, partner.contact.lastName].filter(Boolean).join(" ")
+    : null;
 
   return (
     <div>
       <PageHeader
         title={partner.name}
-        description="Крупная компания / партнёр"
+        description="Партнёр"
         actions={
           <EntityActions
             entity="partner"
@@ -46,7 +50,6 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
         <Card title="Карточка" className="lg:col-span-2">
           <dl className="grid gap-3 sm:grid-cols-2 text-sm">
             {[
-              ["Компания", partner.company?.name],
               ["Регион", partner.region || partner.company?.region],
               ["Склады", partner.company?.warehouseCities],
               ["Производство", partner.company?.productionCities],
@@ -60,6 +63,20 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
               </div>
             ))}
             <div className="sm:col-span-2">
+              <dt className="text-xs text-slate-500">Должностное лицо</dt>
+              <dd className="font-medium">
+                {partner.contact ? (
+                  <Link href={`/crm/contacts/${partner.contact.id}`} className="text-teal-800 hover:underline">
+                    {contactLabel}
+                    {partner.contact.position ? ` · ${partner.contact.position}` : ""}
+                    {partner.contact.phone ? ` · ${partner.contact.phone}` : ""}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
+            <div className="sm:col-span-2">
               <dt className="text-xs text-slate-500">Комментарий</dt>
               <dd>{partner.comment || "—"}</dd>
             </div>
@@ -67,7 +84,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
         </Card>
         <Card title="Активности">
           <ActivityFeed
-            where={{ partnerId: partner.id, companyId: partner.companyId }}
+            where={{ partnerId: partner.id, companyId: partner.companyId, contactId: partner.contactId }}
             redirectTo={`/partners/${partner.id}`}
           />
         </Card>
