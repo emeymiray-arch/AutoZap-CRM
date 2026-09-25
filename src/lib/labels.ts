@@ -36,6 +36,7 @@ export const PARTNER_STATUS_LABELS: Record<string, string> = {
   AGREED: "Согласие",
   ACTIVE: "Партнёр",
   WAITING_CATALOG: "Ожидаем каталог",
+  CATALOG_UPLOADING: "Загружаем каталог",
   CATALOG_LOADED: "Каталог загружен",
   REJECTED: "Отказ",
   // старые статусы (для уже существующих записей)
@@ -62,6 +63,7 @@ export const PARTNER_FUNNEL_ORDER = [
   "AGREED",
   "ACTIVE",
   "WAITING_CATALOG",
+  "CATALOG_UPLOADING",
   "CATALOG_LOADED",
   "REJECTED",
 ] as const;
@@ -179,7 +181,7 @@ export function partnerFunnelStage(status: string): string {
     REGISTRATION: "AGREED",
     CATALOG_RECEIVED: "CATALOG_LOADED",
     CATALOG_REVIEW: "WAITING_CATALOG",
-    CATALOG_UPLOAD: "WAITING_CATALOG",
+    CATALOG_UPLOAD: "CATALOG_UPLOADING",
     STORE_PROCESSING: "CATALOG_LOADED",
     READY_TO_PUBLISH: "CATALOG_LOADED",
     PUBLISHED: "CATALOG_LOADED",
@@ -210,7 +212,7 @@ export function statusTone(status: string): "success" | "warning" | "error" | "n
   const s = status.toUpperCase();
   if (["WON", "DONE", "ACTIVE", "PUBLISHED", "CONVERTED", "UPLOADED", "READY", "AGREED", "CATALOG_LOADED"].includes(s)) return "success";
   if (["OVERDUE", "LOST", "REJECTED", "ERRORS", "NOT_SUITABLE"].includes(s)) return "error";
-  if (["NEEDS_ATTENTION", "SUSPENDED", "NO_ANSWER", "FIXING", "DEFERRED", "WAITING_CATALOG"].includes(s)) return "warning";
+  if (["NEEDS_ATTENTION", "SUSPENDED", "NO_ANSWER", "FIXING", "DEFERRED", "WAITING_CATALOG", "CATALOG_UPLOADING"].includes(s)) return "warning";
   if (["NEW", "EXPECTED", "CREATING", "CONTACTED"].includes(s)) return "info";
   return "neutral";
 }
