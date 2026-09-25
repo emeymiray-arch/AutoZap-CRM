@@ -1,23 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { PageHeader, Card } from "@/components/layout/Page";
-import { ImportForm } from "@/components/crm/ImportForm";
-import { canExportData } from "@/lib/permissions";
 
-export default async function ImportCompaniesPage() {
-  const session = await auth();
-  if (!session?.user) return null;
-  if (!canExportData(session.user.role)) redirect("/crm/companies");
-
-  return (
-    <div className="mx-auto max-w-2xl">
-      <PageHeader
-        title="Импорт компаний"
-        description="CSV / XLSX. Только администратор и руководство."
-      />
-      <Card>
-        <ImportForm entity="companies" />
-      </Card>
-    </div>
-  );
+export default function CompanyImportRedirect() {
+  redirect("/partners");
 }

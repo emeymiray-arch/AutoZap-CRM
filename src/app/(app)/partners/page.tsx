@@ -14,7 +14,7 @@ import {
   PARTNER_STATUS_LABELS,
   partnerFunnelStage,
 } from "@/lib/labels";
-import { parseListParams, dateRange, scopeWhere, usersForSelect } from "@/lib/list-query";
+import { parseListParams, dateRange, scopeWhere, usersForSelect, syncCompaniesIntoPartners } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
 import { startOfDay, endOfDay } from "date-fns";
 
@@ -25,6 +25,8 @@ export default async function PartnersPage({
 }) {
   const session = await auth();
   if (!session?.user) return null;
+  // Все компании сразу в партнёрах, на старте воронки
+  await syncCompaniesIntoPartners();
   const raw = await searchParams;
   const sp = parseListParams(raw);
   const view = typeof raw.view === "string" && raw.view === "funnel" ? "funnel" : "cards";
@@ -73,7 +75,7 @@ export default async function PartnersPage({
     <div>
       <PageHeader
         title="Партнёры"
-        description={`${rows.length} записей · крупные компании`}
+        description={`${rows.length} записей · карточки и воронка (этапы двигает человек)`}
         actions={
           <>
             <DataTools entity="partners" />

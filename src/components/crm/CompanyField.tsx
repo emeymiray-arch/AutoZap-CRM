@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 
 /** Поле компании: ввод названия. Если такой нет — создаётся при сохранении формы. */
 export async function CompanyField({
-  label = "Компания",
+  label = "Партнёр",
   defaultName = "",
   required = false,
   className,
-  hint = "Введите название. Новая компания создастся сама; существующая подставится по имени.",
+  hint = "Название партнёра. Если такого нет — создастся при сохранении.",
 }: {
   label?: string;
   defaultName?: string;
@@ -27,7 +27,7 @@ export async function CompanyField({
         required={required}
         defaultValue={defaultName}
         list={listId}
-        placeholder="Название компании"
+        placeholder="Название партнёра"
         autoComplete="organization"
       />
       <datalist id={listId}>

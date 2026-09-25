@@ -21,11 +21,10 @@ export default async function SearchPage({
         <div className="grid gap-4 md:grid-cols-2">
           {(
             [
-              ["Компании", result.companies, "/crm/companies", (r: { name: string }) => r.name],
+              ["Партнёры", result.partners, "/partners", (r: { name: string }) => r.name],
               ["Контакты", result.contacts, "/crm/contacts", (r: { firstName: string; lastName: string | null }) => `${r.firstName} ${r.lastName || ""}`],
               ["Лиды", result.leads, "/crm/leads", (r: { title: string }) => r.title],
               ["Сделки", result.deals, "/crm/deals", (r: { title: string }) => r.title],
-              ["Партнёры", result.partners, "/partners", (r: { name: string }) => r.name],
               ["Магазины", result.stores, "/stores", (r: { name: string }) => r.name],
               ["Задачи", result.tasks, "/tasks", (r: { title: string }) => r.title],
             ] as const

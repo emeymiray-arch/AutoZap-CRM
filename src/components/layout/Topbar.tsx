@@ -118,12 +118,11 @@ export function Topbar({
             <button type="button" className="fixed inset-0 z-30" aria-label="Закрыть" onClick={closePopovers} />
             <div className="absolute right-0 z-40 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
               {[
-                ["/crm/leads/new", "Лид"],
-                ["/crm/companies/new", "Компания"],
-                ["/crm/contacts/new", "Контакт"],
-                ["/crm/deals/new", "Сделка"],
                 ["/partners/new", "Партнёр"],
                 ["/stores/new", "Магазин"],
+                ["/crm/leads/new", "Лид"],
+                ["/crm/contacts/new", "Контакт"],
+                ["/crm/deals/new", "Сделка"],
                 ["/tasks/new", "Задача"],
               ].map(([href, label]) => (
                 <Link

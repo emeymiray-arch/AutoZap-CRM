@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  Building2,
   Contact,
   Handshake,
   Store,
@@ -31,7 +30,6 @@ const items: {
   { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard, visible: () => true },
   { href: "/partners", label: "Партнёры", icon: Handshake, visible: () => true },
   { href: "/stores", label: "Магазины", icon: Store, visible: () => true },
-  { href: "/crm/companies", label: "Компании", icon: Building2, group: "CRM", visible: () => true },
   { href: "/crm/leads", label: "Лиды", icon: Users, group: "CRM", visible: () => true },
   { href: "/crm/contacts", label: "Контакты", icon: Contact, group: "CRM", visible: () => true },
   { href: "/crm/deals", label: "Сделки", icon: Briefcase, group: "CRM", visible: () => true },
