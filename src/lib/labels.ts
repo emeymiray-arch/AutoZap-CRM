@@ -134,6 +134,14 @@ export const ROLE_LABELS: Record<string, string> = {
   OS_MANAGER: "Менеджер ОС",
 };
 
+export const SALARY_TYPE_LABELS: Record<string, string> = {
+  SALARY: "Зарплата",
+  BONUS: "Премия",
+  ADVANCE: "Аванс",
+  DEDUCTION: "Удержание",
+  OTHER: "Прочее",
+};
+
 export const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   CALL: "Звонок",
   MESSAGE: "Сообщение",

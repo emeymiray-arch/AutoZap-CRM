@@ -52,6 +52,11 @@ export function canAccessSettings(role: Role): boolean {
   return role === "ADMIN";
 }
 
+/** Дневник ЗП сотрудников — руководитель и администратор */
+export function canAccessPayroll(role: Role): boolean {
+  return role === "ADMIN" || role === "MANAGER_LEAD";
+}
+
 /** Scope filter for managers: only own responsible records */
 export function responsibleScope(user: SessionUser): { responsibleId?: string } {
   if (canViewAll(user.role)) return {};

@@ -15,7 +15,7 @@ import {
 } from "@/lib/entity-actions";
 import { findCompanyDuplicates, findContactDuplicates } from "@/lib/dedup";
 import { processOverdueTasks } from "@/lib/automations";
-import { canManageUsers, isSelectableRole } from "@/lib/permissions";
+import { canManageUsers, isSelectableRole, canAccessPayroll } from "@/lib/permissions";
 import { citiesFromForm } from "@/lib/geo";
 
 function str(form: FormData, key: string) {
@@ -1083,4 +1083,93 @@ export async function createTeamUserAction(formData: FormData): Promise<void> {
   });
   revalidateEntity(["/settings"]);
   redirect("/settings?added=1");
+}
+
+const SALARY_TYPES = new Set(["SALARY", "BONUS", "ADVANCE", "DEDUCTION", "OTHER"]);
+
+/** Руководитель / админ — запись в дневник ЗП */
+export async function createSalaryEntryAction(formData: FormData): Promise<void> {
+  const actor = await requireUser();
+  if (!canAccessPayroll(actor.role)) {
+    throw new Error("Недостаточно прав для дневника ЗП");
+  }
+
+  const employeeId = str(formData, "employeeId");
+  const amount = num(formData, "amount");
+  const entryDate = date(formData, "entryDate");
+  const typeRaw = (str(formData, "type") || "SALARY").toUpperCase();
+  const note = str(formData, "note");
+
+  if (!employeeId || amount == null || !entryDate) {
+    throw new Error("Укажите сотрудника, дату и сумму");
+  }
+  if (!SALARY_TYPES.has(typeRaw)) {
+    throw new Error("Некорректный тип начисления");
+  }
+
+  const employee = await prisma.user.findFirst({
+    where: { id: employeeId, archivedAt: null, active: true },
+  });
+  if (!employee) throw new Error("Сотрудник не найден");
+
+  const signedAmount = typeRaw === "DEDUCTION" ? -Math.abs(amount) : Math.abs(amount);
+
+  const entry = await prisma.salaryEntry.create({
+    data: {
+      employeeId,
+      entryDate,
+      amount: signedAmount,
+      type: typeRaw,
+      note,
+      createdById: actor.id,
+    },
+  });
+
+  await writeAudit({
+    userId: actor.id,
+    entityType: "salary_entry",
+    entityId: entry.id,
+    action: "create",
+    summary: `${actor.name}: ЗП ${employee.name} — ${signedAmount} ₽ (${typeRaw})`,
+    newValue: {
+      employeeId,
+      amount: signedAmount,
+      type: typeRaw,
+      entryDate: entryDate.toISOString(),
+    },
+  });
+
+  revalidateEntity(["/payroll"]);
+  redirect("/payroll");
+}
+
+/** Руководитель / админ — удаление записи дневника ЗП */
+export async function deleteSalaryEntryAction(formData: FormData): Promise<void> {
+  const actor = await requireUser();
+  if (!canAccessPayroll(actor.role)) {
+    throw new Error("Недостаточно прав для дневника ЗП");
+  }
+
+  const id = str(formData, "id");
+  if (!id) throw new Error("Не указана запись");
+
+  const existing = await prisma.salaryEntry.findUnique({ where: { id } });
+  if (!existing) throw new Error("Запись не найдена");
+
+  await prisma.salaryEntry.delete({ where: { id } });
+  await writeAudit({
+    userId: actor.id,
+    entityType: "salary_entry",
+    entityId: id,
+    action: "delete",
+    summary: `${actor.name} удалил(а) запись ЗП`,
+    oldValue: {
+      employeeId: existing.employeeId,
+      amount: existing.amount,
+      type: existing.type,
+    },
+  });
+
+  revalidateEntity(["/payroll"]);
+  redirect("/payroll");
 }

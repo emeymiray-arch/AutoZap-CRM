@@ -14,11 +14,12 @@ import {
   Archive,
   Settings,
   Briefcase,
+  Wallet,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/permissions";
-import { canAccessSettings, canSeeAnalytics, canViewAll } from "@/lib/permissions";
+import { canAccessPayroll, canAccessSettings, canSeeAnalytics, canViewAll } from "@/lib/permissions";
 
 const items: {
   href: string;
@@ -36,6 +37,7 @@ const items: {
   { href: "/tasks", label: "Задачи", icon: CheckSquare, visible: () => true },
   { href: "/activities", label: "Активности", icon: Activity, visible: () => true },
   { href: "/analytics", label: "Аналитика", icon: BarChart3, visible: canSeeAnalytics },
+  { href: "/payroll", label: "Дневник ЗП", icon: Wallet, visible: canAccessPayroll },
   { href: "/archive", label: "Архив", icon: Archive, visible: canViewAll },
   { href: "/settings", label: "Настройки", icon: Settings, visible: canAccessSettings },
 ];

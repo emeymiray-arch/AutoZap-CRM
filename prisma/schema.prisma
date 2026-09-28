@@ -45,6 +45,29 @@ model User {
   notifications        Notification[]
   savedFilters         SavedFilter[]
   attachments          Attachment[]
+  salaryEntries        SalaryEntry[]  @relation("SalaryEmployee")
+  salaryEntriesCreated SalaryEntry[]  @relation("SalaryCreator")
+}
+
+/// Дневник заработной платы сотрудников (для руководителя)
+model SalaryEntry {
+  id          String   @id @default(uuid())
+  employeeId  String
+  entryDate   DateTime @db.Date
+  amount      Float
+  /// SALARY | BONUS | ADVANCE | DEDUCTION | OTHER
+  type        String   @default("SALARY")
+  note        String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employee  User @relation("SalaryEmployee", fields: [employeeId], references: [id])
+  createdBy User @relation("SalaryCreator", fields: [createdById], references: [id])
+
+  @@index([employeeId, entryDate])
+  @@index([entryDate])
+  @@index([createdById])
 }
 
 model Company {
