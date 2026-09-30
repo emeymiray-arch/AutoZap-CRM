@@ -73,6 +73,7 @@ export default async function AnalyticsPage({
   const leadsInPeriod = await prisma.lead.findMany({
     where: { archivedAt: null, createdAt: { gte: start, lte: end } },
     include: { responsible: true },
+    take: 5000,
   });
 
   const days = eachDayOfInterval({ start, end });

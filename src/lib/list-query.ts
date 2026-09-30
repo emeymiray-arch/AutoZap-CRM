@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { SessionUser } from "@/lib/permissions";
-import { canViewAll } from "@/lib/permissions";
+import { canSeeTeamRecords } from "@/lib/permissions";
 import type { Prisma } from "@prisma/client";
 
 export function parseListParams(sp: Record<string, string | string[] | undefined>) {
@@ -35,7 +35,7 @@ export function dateRange(from?: string, to?: string): Prisma.DateTimeFilter | u
 }
 
 export function scopeWhere(user: SessionUser) {
-  return canViewAll(user.role) ? {} : { responsibleId: user.id };
+  return canSeeTeamRecords(user.role) ? {} : { responsibleId: user.id };
 }
 
 export async function usersForSelect() {

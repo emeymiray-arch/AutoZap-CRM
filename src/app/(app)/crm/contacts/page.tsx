@@ -45,7 +45,15 @@ export default async function ContactsPage({
 
   const contacts = await prisma.contact.findMany({
     where,
-    include: { company: true, responsible: true },
+    include: {
+      company: true,
+      responsible: true,
+      partners: {
+        where: { archivedAt: null },
+        select: { id: true, name: true },
+        take: 3,
+      },
+    },
     orderBy: { updatedAt: "desc" },
     take: 200,
   });
@@ -81,7 +89,14 @@ export default async function ContactsPage({
             header: "Имя",
             render: (r) => `${r.firstName} ${r.lastName || ""}`.trim(),
           },
-          { key: "company", header: "Компания", render: (r) => r.company?.name || "—" },
+          {
+            key: "partner",
+            header: "Партнёр",
+            render: (r) =>
+              r.partners.length
+                ? r.partners.map((p) => p.name).join(", ")
+                : r.company?.name || "—",
+          },
           { key: "phone", header: "Телефон", render: (r) => r.phone || "—" },
           { key: "email", header: "Email", render: (r) => r.email || "—" },
           { key: "position", header: "Должность", render: (r) => r.position || "—" },

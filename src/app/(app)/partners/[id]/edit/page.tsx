@@ -24,6 +24,20 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
     ? [...PARTNER_FUNNEL_ORDER]
     : [partner.status, ...PARTNER_FUNNEL_ORDER];
 
+  const contactOptions = [...contacts];
+  if (partner.contact && !contactOptions.some((c) => c.id === partner.contact!.id)) {
+    contactOptions.unshift({
+      id: partner.contact.id,
+      firstName: partner.contact.firstName,
+      lastName: partner.contact.lastName,
+      companyId: partner.contact.companyId,
+      position: partner.contact.position,
+      phone: partner.contact.phone,
+    });
+  }
+
+  const c = partner.contact;
+
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title={`Изменить: ${partner.name}`} />
@@ -48,21 +62,41 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
 
           <div className="md:col-span-2 border-t border-slate-200 pt-3 mt-1">
             <h3 className="text-sm font-semibold text-slate-800">Должностное лицо (контакт)</h3>
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              Сохраняется в карточке партнёра и на доске «Контакты»
+            </p>
           </div>
-          <Select name="contactId" label="Контакт" className="md:col-span-2" defaultValue={partner.contactId || ""}>
-            <option value="">— новый из полей ниже —</option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName || ""}
-                {c.position ? ` · ${c.position}` : ""}
+          <Select
+            name="contactId"
+            label="Контакт"
+            className="md:col-span-2"
+            defaultValue={partner.contactId || ""}
+          >
+            <option value="">— создать новый из полей ниже —</option>
+            {contactOptions.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.firstName} {row.lastName || ""}
+                {row.position ? ` · ${row.position}` : ""}
+                {row.phone ? ` · ${row.phone}` : ""}
               </option>
             ))}
           </Select>
-          <Input name="contactFirstName" label="Имя (если новый)" />
-          <Input name="contactLastName" label="Фамилия (если новый)" />
-          <Input name="contactPosition" label="Должность (если новый)" />
-          <Input name="contactPhone" label="Телефон (если новый)" />
-          <Input name="contactEmail" label="Email (если новый)" type="email" className="md:col-span-2" />
+          <Input
+            name="contactFirstName"
+            label="Имя"
+            defaultValue={c?.firstName || ""}
+            placeholder={partner.contactId ? undefined : "Обязательно для нового контакта"}
+          />
+          <Input name="contactLastName" label="Фамилия" defaultValue={c?.lastName || ""} />
+          <Input name="contactPosition" label="Должность" defaultValue={c?.position || ""} />
+          <Input name="contactPhone" label="Телефон" defaultValue={c?.phone || ""} />
+          <Input
+            name="contactEmail"
+            label="Email"
+            type="email"
+            className="md:col-span-2"
+            defaultValue={c?.email || ""}
+          />
 
           <MultiCityField
             name="warehouseCities"

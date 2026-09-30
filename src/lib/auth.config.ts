@@ -1,21 +1,31 @@
 import type { NextAuthConfig } from "next-auth";
 
+const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
+/** 30 дней — сессия переживает деплои, пока AUTH_SECRET не меняют */
+export const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
+
 export const authConfig = {
   pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: SESSION_MAX_AGE,
+    updateAge: 24 * 60 * 60,
+  },
+  jwt: {
+    maxAge: SESSION_MAX_AGE,
+  },
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: authSecret,
   providers: [],
   callbacks: {
     authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
       const path = request.nextUrl.pathname;
-      const isLogin = path.startsWith("/login");
-      const isRegister = path.startsWith("/register");
-      const isApiAuth = path.startsWith("/api/auth");
-      if (isApiAuth) return true;
-      if (isLogin || isRegister) return true;
-      return isLoggedIn;
+      if (path.startsWith("/api/auth")) return true;
+      if (path.startsWith("/api/health")) return true;
+      if (path.startsWith("/api/cron")) return true;
+      if (path.startsWith("/login") || path.startsWith("/register")) return true;
+      return !!auth?.user;
     },
     async jwt({ token, user }) {
       if (user) {
@@ -24,10 +34,18 @@ export const authConfig = {
         token.role = (user as any).role;
         token.name = user.name;
         token.email = user.email;
+        token.checkedAt = Date.now();
       }
       return token;
     },
     async session({ session, token }) {
+      if (token.error === "SessionInvalid") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session as any).error = "SessionInvalid";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        session.user = undefined as any;
+        return session;
+      }
       if (session.user) {
         session.user.id = token.id as string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

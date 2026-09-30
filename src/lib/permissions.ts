@@ -5,7 +5,7 @@ export const SELECTABLE_ROLES: { value: Role; label: string; hint: string }[] = 
   {
     value: "MANAGER",
     label: "Менеджер",
-    hint: "Работает со своими лидами, сделками и задачами",
+    hint: "Видит общую базу команды, работает с лидами, сделками и задачами",
   },
   {
     value: "MANAGER_LEAD",
@@ -57,9 +57,14 @@ export function canAccessPayroll(role: Role): boolean {
   return role === "ADMIN" || role === "MANAGER_LEAD";
 }
 
-/** Scope filter for managers: only own responsible records */
+/** Общая база команды: все роли видят все активные записи CRM */
+export function canSeeTeamRecords(role: Role): boolean {
+  void role;
+  return true;
+}
+
 export function responsibleScope(user: SessionUser): { responsibleId?: string } {
-  if (canViewAll(user.role)) return {};
+  if (canSeeTeamRecords(user.role)) return {};
   return { responsibleId: user.id };
 }
 

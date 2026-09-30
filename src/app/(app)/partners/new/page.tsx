@@ -31,7 +31,7 @@ export default async function NewPartnerPage() {
           <div className="md:col-span-2 border-t border-slate-200 pt-3 mt-1">
             <h3 className="text-sm font-semibold text-slate-800">Должностное лицо (контакт)</h3>
             <p className="mt-0.5 text-[11px] text-slate-500">
-              Выберите существующий контакт или заполните поля — создастся новый
+              Контакт сохранится в карточке партнёра и появится на доске «Контакты»
             </p>
           </div>
           <Select name="contactId" label="Существующий контакт" className="md:col-span-2">
@@ -40,10 +40,11 @@ export default async function NewPartnerPage() {
               <option key={c.id} value={c.id}>
                 {c.firstName} {c.lastName || ""}
                 {c.position ? ` · ${c.position}` : ""}
+                {c.phone ? ` · ${c.phone}` : ""}
               </option>
             ))}
           </Select>
-          <Input name="contactFirstName" label="Имя" />
+          <Input name="contactFirstName" label="Имя" placeholder="Обязательно, если новый контакт" />
           <Input name="contactLastName" label="Фамилия" />
           <Input name="contactPosition" label="Должность" />
           <Input name="contactPhone" label="Телефон" />

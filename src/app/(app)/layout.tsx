@@ -3,13 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AppShell } from "@/components/layout/AppShell";
 import { ROLE_LABELS } from "@/lib/labels";
-import { processOverdueTasks } from "@/lib/automations";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-
-  await processOverdueTasks().catch(() => 0);
 
   const notifications = await prisma.notification.findMany({
     where: { userId: session.user.id },

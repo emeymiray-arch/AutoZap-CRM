@@ -145,7 +145,10 @@ export async function runAutomations(input: {
   });
 }
 
-/** Mark overdue tasks and notify */
+/**
+ * Пометить просроченные задачи и уведомить ответственных.
+ * Вызывать из cron (не из layout) — иначе при 200 пользователях будет thundering herd.
+ */
 export async function processOverdueTasks() {
   const now = new Date();
   const overdue = await prisma.task.findMany({
@@ -154,20 +157,28 @@ export async function processOverdueTasks() {
       deadline: { lt: now },
       status: { in: ["NEW", "IN_PROGRESS", "REVIEW"] },
     },
+    select: { id: true, title: true, responsibleId: true },
+    take: 500,
   });
 
-  for (const task of overdue) {
-    await prisma.task.update({
-      where: { id: task.id },
-      data: { status: "OVERDUE" },
-    });
-    await notifyUser(
-      task.responsibleId,
-      "Просроченная задача",
-      task.title,
-      `/tasks/${task.id}`
-    );
-  }
+  if (overdue.length === 0) return 0;
+
+  const ids = overdue.map((t) => t.id);
+  await prisma.task.updateMany({
+    where: { id: { in: ids } },
+    data: { status: "OVERDUE" },
+  });
+
+  await prisma.notification.createMany({
+    data: overdue
+      .filter((t) => t.responsibleId)
+      .map((t) => ({
+        userId: t.responsibleId!,
+        title: "Просроченная задача",
+        body: t.title,
+        link: `/tasks/${t.id}`,
+      })),
+  });
 
   return overdue.length;
 }

@@ -9,41 +9,45 @@ import { rowsToCsv, rowsToWorkbook } from "@/lib/import-export/spreadsheet";
 import type { SessionUser } from "@/lib/permissions";
 import { scopeWhere } from "@/lib/list-query";
 
+/** Жёсткий потолок экспорта — защита от OOM при росте данных */
+const EXPORT_TAKE = 10_000;
+
 export async function exportEntityRows(
   entity: string,
   bitrix = false,
   user?: SessionUser
 ) {
   const scope = user ? scopeWhere(user) : {};
+  const base = { where: { archivedAt: null, ...scope }, take: EXPORT_TAKE };
   switch (entity) {
     case "leads": {
-      const rows = await prisma.lead.findMany({ where: { archivedAt: null, ...scope } });
+      const rows = await prisma.lead.findMany(base);
       return bitrix ? rows.map(mapLeadToBitrix) : rows;
     }
     case "companies": {
-      const rows = await prisma.company.findMany({ where: { archivedAt: null, ...scope } });
+      const rows = await prisma.company.findMany(base);
       return bitrix ? rows.map(mapCompanyToBitrix) : rows;
     }
     case "contacts": {
-      const rows = await prisma.contact.findMany({ where: { archivedAt: null, ...scope } });
+      const rows = await prisma.contact.findMany(base);
       return bitrix ? rows.map(mapContactToBitrix) : rows;
     }
     case "deals": {
-      const rows = await prisma.deal.findMany({ where: { archivedAt: null, ...scope } });
+      const rows = await prisma.deal.findMany(base);
       return bitrix ? rows.map(mapDealToBitrix) : rows;
     }
     case "partners":
       if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
-      return prisma.partner.findMany({ where: { archivedAt: null, ...scope } });
+      return prisma.partner.findMany(base);
     case "stores":
       if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
-      return prisma.store.findMany({ where: { archivedAt: null, ...scope } });
+      return prisma.store.findMany(base);
     case "tasks":
       if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
-      return prisma.task.findMany({ where: { archivedAt: null, ...scope } });
+      return prisma.task.findMany(base);
     case "catalogs":
       if (bitrix) throw new Error("Bitrix24 export доступен для leads/companies/contacts/deals");
-      return prisma.catalog.findMany({ where: { archivedAt: null, ...scope } });
+      return prisma.catalog.findMany(base);
     default:
       throw new Error("Unknown entity");
   }

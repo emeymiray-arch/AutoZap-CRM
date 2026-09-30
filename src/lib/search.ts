@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import type { SessionUser } from "./permissions";
-import { canViewAll } from "./permissions";
+import { canSeeTeamRecords } from "./permissions";
 import { containsInsensitive } from "./access";
 
 export async function globalSearch(q: string, user: SessionUser, limit = 20) {
@@ -8,7 +8,7 @@ export async function globalSearch(q: string, user: SessionUser, limit = 20) {
   if (!query || query.length < 2)
     return { companies: [], contacts: [], leads: [], deals: [], partners: [], stores: [], tasks: [] };
 
-  const scope = canViewAll(user.role) ? {} : { responsibleId: user.id };
+  const scope = canSeeTeamRecords(user.role) ? {} : { responsibleId: user.id };
   const like = containsInsensitive(query);
 
   const [companies, contacts, leads, deals, partners, stores, tasks] = await Promise.all([

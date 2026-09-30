@@ -329,7 +329,7 @@ export async function createContactAction(formData: FormData): Promise<void> {
     companyId: contact.companyId,
     contactId: contact.id,
   });
-  revalidateEntity(["/crm/contacts", "/dashboard"]);
+  revalidateEntity(["/crm/contacts", "/partners", "/dashboard"]);
   redirect(`/crm/contacts/${contact.id}`);
 }
 
@@ -350,7 +350,7 @@ export async function updateContactAction(id: string, formData: FormData) {
   };
   const after = await prisma.contact.update({ where: { id }, data });
   await trackFieldChanges("contact", id, user, before as never, after as never);
-  revalidateEntity([`/crm/contacts/${id}`, "/crm/contacts"]);
+  revalidateEntity([`/crm/contacts/${id}`, "/crm/contacts", "/partners"]);
   redirect(`/crm/contacts/${id}`);
 }
 
@@ -469,6 +469,7 @@ export async function convertLeadAction(leadId: string) {
     data: {
       name: lead.title,
       companyId,
+      contactId: lead.contactId,
       leadId: lead.id,
       responsibleId: lead.responsibleId || user.id,
       status: "REGISTRATION",
@@ -520,7 +521,7 @@ export async function convertLeadAction(leadId: string) {
     partnerId: partner.id,
   });
 
-  revalidateEntity(["/crm/leads", "/partners", "/crm/deals", "/dashboard"]);
+  revalidateEntity(["/crm/leads", "/partners", "/crm/deals", "/crm/contacts", "/dashboard"]);
   redirect(`/partners/${partner.id}`);
 }
 
@@ -602,38 +603,67 @@ export async function moveDealStageAction(dealId: string, stage: string) {
 // ─── Partners / Catalogs / Stores ──────────────────────────
 
 /**
- * Контакт (должностное лицо) партнёра: выбрать существующий или создать из полей формы.
+ * Контакт (должностное лицо) партнёра: выбрать / обновить существующий или создать из полей формы.
+ * Не сбрасывает уже привязанный контакт при сохранении партнёра.
  */
 async function resolvePartnerContactId(
   formData: FormData,
-  user: { id: string },
+  user: { id: string; name?: string },
   companyId: string | null,
+  keepContactId?: string | null,
 ): Promise<string | null> {
-  const existingId = str(formData, "contactId");
-  if (existingId) {
-    if (companyId) {
-      await prisma.contact.update({
-        where: { id: existingId },
-        data: { companyId },
-      });
-    }
-    return existingId;
+  const formContactId = str(formData, "contactId");
+  const firstName = (str(formData, "contactFirstName") || "").trim();
+  const lastName = (str(formData, "contactLastName") || "").trim() || null;
+  const position = (str(formData, "contactPosition") || "").trim() || null;
+  const phone = (str(formData, "contactPhone") || "").trim() || null;
+  const email = (str(formData, "contactEmail") || "").trim() || null;
+  const hasPersonFields = Boolean(firstName || lastName || position || phone || email);
+
+  const personPatch = hasPersonFields
+    ? {
+        ...(firstName ? { firstName } : {}),
+        lastName,
+        position,
+        phone,
+        email,
+      }
+    : {};
+
+  const targetId = formContactId || keepContactId || null;
+
+  if (targetId) {
+    await prisma.contact.update({
+      where: { id: targetId },
+      data: {
+        ...personPatch,
+        ...(companyId ? { companyId } : {}),
+      },
+    }).catch(() => null);
+    return targetId;
   }
 
-  const firstName = (str(formData, "contactFirstName") || "").trim();
-  if (!firstName) return null;
+  if (!hasPersonFields) return null;
 
   const contact = await prisma.contact.create({
     data: {
-      firstName,
-      lastName: str(formData, "contactLastName"),
-      position: str(formData, "contactPosition"),
-      phone: str(formData, "contactPhone"),
-      email: str(formData, "contactEmail"),
+      firstName: firstName || lastName || phone || "Контакт",
+      lastName,
+      position,
+      phone,
+      email,
       companyId,
       responsibleId: str(formData, "responsibleId") || user.id,
       createdById: user.id,
     },
+  });
+  await writeAudit({
+    userId: user.id,
+    entityType: "contact",
+    entityId: contact.id,
+    action: "create",
+    newValue: contact,
+    summary: `${user.name || "Пользователь"} создал(а) контакт из карточки партнёра`,
   });
   revalidateEntity(["/crm/contacts"]);
   return contact.id;
@@ -645,6 +675,9 @@ export async function createPartnerAction(formData: FormData) {
   if (!partnerName) throw new Error("Название обязательно");
   const companyId = await ensureCompanyMirror(formData, user, partnerName);
   const contactId = await resolvePartnerContactId(formData, user, companyId);
+  if (!contactId) {
+    throw new Error("Укажите должностное лицо: выберите контакт или заполните имя");
+  }
   const data = {
     name: partnerName,
     companyId,
@@ -688,8 +721,12 @@ export async function updatePartnerAction(id: string, formData: FormData) {
     partnerName,
     before.companyId,
   );
-  const contactId =
-    (await resolvePartnerContactId(formData, user, companyId)) || before.contactId;
+  const contactId = await resolvePartnerContactId(
+    formData,
+    user,
+    companyId,
+    before.contactId,
+  );
   const data = {
     name: partnerName,
     companyId,

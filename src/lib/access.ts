@@ -1,4 +1,4 @@
-import { canManageUsers, canViewAll, type SessionUser } from "./permissions";
+import { canManageUsers, canSeeTeamRecords, type SessionUser } from "./permissions";
 
 export function assertCanAccessRecord(
   user: SessionUser,
@@ -8,7 +8,7 @@ export function assertCanAccessRecord(
     const err = new Error("NOT_FOUND");
     throw err;
   }
-  if (canViewAll(user.role)) return;
+  if (canSeeTeamRecords(user.role)) return;
   if (record.responsibleId && record.responsibleId !== user.id) {
     const err = new Error("FORBIDDEN");
     throw err;

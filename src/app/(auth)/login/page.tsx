@@ -29,7 +29,9 @@ function LoginForm() {
         setError(
           res.error === "Configuration"
             ? "Ошибка конфигурации входа на сервере. Попробуйте позже."
-            : "Неверный email или пароль",
+            : res.error === "AccessDenied"
+              ? "Слишком много попыток входа. Подождите 15 минут."
+              : "Неверный email или пароль",
         );
         return;
       }
