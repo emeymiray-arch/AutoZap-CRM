@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /**
- * Vercel Cron: каждые 5 минут помечает просроченные задачи.
+ * Vercel Cron: раз в день помечает просроченные задачи (Hobby не разрешает чаще).
  * Защита: Authorization: Bearer $CRON_SECRET (Vercel подставляет автоматически)
  * или заголовок x-vercel-cron.
  */
