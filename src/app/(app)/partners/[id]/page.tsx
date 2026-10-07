@@ -22,11 +22,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
     : null;
 
   const rows: [string, string | null | undefined][] = [
-    ["Телефон", partner.company?.phone],
     ["Город", partner.company?.city || partner.region],
-    ["Магазины", partner.company?.storeCities],
-    ["Склады", partner.company?.warehouseCities],
-    ["Производство", partner.company?.productionCities],
     [
       "Контакт",
       contactLabel

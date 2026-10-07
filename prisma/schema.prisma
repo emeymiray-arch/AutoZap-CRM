@@ -303,6 +303,7 @@ model Person {
   name          String
   phone         String?
   city          String?
+  status        String    @default("NEW")
   comment       String?
   responsibleId String?
   createdAt     DateTime  @default(now())
@@ -314,6 +315,7 @@ model Person {
 
   @@index([name])
   @@index([phone])
+  @@index([status])
   @@index([responsibleId])
   @@index([archivedAt])
 }
@@ -331,6 +333,8 @@ model Store {
   activatedAt   DateTime?
   responsibleId String?
   storeUrl      String?
+  contactName   String?
+  contactPhone  String?
   comment       String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

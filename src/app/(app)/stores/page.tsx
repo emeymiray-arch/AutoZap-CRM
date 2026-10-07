@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/Button";
 import { ViewTabs } from "@/components/crm/ViewTabs";
-import { EntityCard, EntityCardGrid } from "@/components/crm/EntityCard";
+import { CompactEntityList } from "@/components/crm/CompactEntityList";
 import { StoreKanban } from "@/components/kanban/StoreKanban";
 import { STORE_STATUS_LABELS, storeFunnelStage } from "@/lib/labels";
 import { parseListParams, scopeWhere } from "@/lib/list-query";
@@ -19,7 +19,7 @@ export default async function StoresPage({
   if (!session?.user) return null;
   const raw = await searchParams;
   const sp = parseListParams(raw);
-  const view = typeof raw.view === "string" && raw.view === "funnel" ? "funnel" : "cards";
+  const view = typeof raw.view === "string" && raw.view === "funnel" ? "funnel" : "list";
 
   const where: Prisma.StoreWhereInput = {
     archivedAt: null,
@@ -29,8 +29,9 @@ export default async function StoresPage({
       ? {
           OR: [
             { name: { contains: sp.q, mode: "insensitive" as const } },
-            { storeUrl: { contains: sp.q, mode: "insensitive" as const } },
             { region: { contains: sp.q, mode: "insensitive" as const } },
+            { contactName: { contains: sp.q, mode: "insensitive" as const } },
+            { contactPhone: { contains: sp.q, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -48,7 +49,7 @@ export default async function StoresPage({
     title: r.name,
     stage: storeFunnelStage(r.status),
     subtitle: r.region,
-    meta: r.responsible?.name || null,
+    meta: [r.contactName, r.contactPhone].filter(Boolean).join(" · ") || r.responsible?.name || null,
   }));
 
   return (
@@ -69,28 +70,25 @@ export default async function StoresPage({
       {view === "funnel" ? (
         <StoreKanban items={funnelItems} />
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
           Магазинов пока нет
         </div>
       ) : (
-        <EntityCardGrid>
-          {rows.map((r) => (
-            <EntityCard
-              key={r.id}
-              href={`/stores/${r.id}`}
-              title={r.name}
-              badge={{
+        <CompactEntityList
+          rows={rows.map((r) => {
+            const contact = [r.contactName, r.contactPhone].filter(Boolean).join(" · ");
+            return {
+              href: `/stores/${r.id}`,
+              title: r.name,
+              badge: {
                 status: r.status,
                 label: STORE_STATUS_LABELS[r.status] || r.status,
-              }}
-              lines={[
-                { label: "Город", value: r.region },
-                { label: "Ссылка", value: r.storeUrl },
-                { label: "Ответственный", value: r.responsible?.name },
-              ]}
-            />
-          ))}
-        </EntityCardGrid>
+              },
+              meta: contact || undefined,
+              trailing: r.region || r.responsible?.name,
+            };
+          })}
+        />
       )}
     </div>
   );

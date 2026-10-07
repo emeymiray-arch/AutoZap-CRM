@@ -31,12 +31,12 @@ function LoginForm() {
             ? "Ошибка конфигурации входа на сервере. Попробуйте позже."
             : res.error === "AccessDenied"
               ? "Слишком много попыток входа. Подождите 15 минут."
-              : "Неверный email или пароль",
+              : "Неверный логин или пароль",
         );
         return;
       }
       if (!res?.ok) {
-        setError("Не удалось войти. Проверьте email и пароль.");
+        setError("Не удалось войти. Проверьте логин и пароль.");
         return;
       }
       router.push(params.get("callbackUrl") || "/dashboard");
@@ -51,10 +51,12 @@ function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <Input
-        label="Email"
-        type="email"
+        label="Логин"
+        type="text"
+        name="login"
         required
         autoComplete="username"
+        inputMode="text"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />

@@ -18,7 +18,6 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
   if (!partner) notFound();
   const users = await usersForSelect();
   const action = updatePartnerAction.bind(null, id);
-  const company = partner.company;
   const c = partner.contact;
   const statusOptions = PARTNER_FUNNEL_ORDER.includes(partner.status as never)
     ? [...PARTNER_FUNNEL_ORDER]
@@ -31,11 +30,7 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
         <form action={action} className="grid gap-3">
           {partner.contactId ? <input type="hidden" name="contactId" value={partner.contactId} /> : null}
           <Input name="name" label="Название" required defaultValue={partner.name} />
-          <Input name="phone" label="Телефон" type="tel" defaultValue={company?.phone || ""} />
-          <Input name="city" label="Город" defaultValue={company?.city || partner.region || ""} />
-          <Input name="storeCities" label="Магазины" defaultValue={company?.storeCities || ""} />
-          <Input name="warehouseCities" label="Склады" defaultValue={company?.warehouseCities || ""} />
-          <Input name="productionCities" label="Производство" defaultValue={company?.productionCities || ""} />
+          <Input name="city" label="Город" defaultValue={partner.company?.city || partner.region || ""} />
 
           <div className="rounded-xl bg-slate-50 p-3">
             <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>

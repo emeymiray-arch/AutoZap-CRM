@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { EntityActions } from "@/components/crm/EntityActions";
+import { PERSON_STATUS_LABELS } from "@/lib/labels";
 import { canHardDelete } from "@/lib/permissions";
 
 export default async function PersonDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,6 +41,12 @@ export default async function PersonDetailPage({ params }: { params: Promise<{ i
           />
         }
       />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Badge status={person.status}>{PERSON_STATUS_LABELS[person.status] || person.status}</Badge>
+        <Button href="/people?view=funnel" size="sm" variant="secondary">
+          Воронка
+        </Button>
+      </div>
       <Card title="Карточка">
         <dl className="grid gap-3 text-sm">
           {rows.map(([k, v]) => (

@@ -59,7 +59,7 @@ export default async function SettingsPage({
           <form action={createTeamUserAction} className="space-y-3 border-t border-slate-100 pt-4">
             <div className="text-sm font-medium text-slate-800">Создать аккаунт</div>
             <Input name="name" label="Имя" required placeholder="Имя сотрудника" />
-            <Input name="email" label="Логин (email)" type="email" required />
+            <Input name="email" label="Логин" type="text" required placeholder="например 001" />
             <PasswordInput name="password" label="Пароль" required minLength={6} autoComplete="new-password" />
             <Select name="role" label="Роль" required defaultValue="MANAGER">
               {SELECTABLE_ROLES.map((r) => (

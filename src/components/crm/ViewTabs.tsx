@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function ViewTabs({
-  cardsLabel = "Карточки",
+  cardsLabel = "Список",
   funnelLabel = "Воронка",
 }: {
   cardsLabel?: string;

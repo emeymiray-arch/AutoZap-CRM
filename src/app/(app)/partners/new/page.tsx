@@ -10,15 +10,11 @@ export default async function NewPartnerPage() {
   await auth();
   return (
     <div className="mx-auto max-w-lg">
-      <PageHeader title="Новый партнёр" description="Название, телефон, город и объекты — без длинных списков" />
+      <PageHeader title="Новый партнёр" description="Название, город и контактное лицо" />
       <Card>
         <form action={createPartnerAction} className="grid gap-3">
           <Input name="name" label="Название" required placeholder="ООО «Пример»" />
-          <Input name="phone" label="Телефон" type="tel" placeholder="+7 …" />
           <Input name="city" label="Город" placeholder="Москва" />
-          <Input name="storeCities" label="Магазины" placeholder="Москва, Казань" />
-          <Input name="warehouseCities" label="Склады" placeholder="Подольск" />
-          <Input name="productionCities" label="Производство" placeholder="Ярославль" />
 
           <div className="rounded-xl bg-slate-50 p-3">
             <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>

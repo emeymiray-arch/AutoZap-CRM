@@ -137,14 +137,14 @@ async function ensureCompanyMirror(
       where: { id: companyId },
       data: {
         name: locationData.name,
-        region: locationData.region,
-        warehouseCities: locationData.warehouseCities,
-        productionCities: locationData.productionCities,
-        storeCities: locationData.storeCities,
-        ...(locationData.phone ? { phone: locationData.phone } : {}),
-        ...(locationData.email ? { email: locationData.email } : {}),
-        ...(locationData.city ? { city: locationData.city } : {}),
-        ...(locationData.website ? { website: locationData.website } : {}),
+        ...(formData.has("region") || formData.has("city") ? { region: locationData.region } : {}),
+        ...(formData.has("warehouseCities") ? { warehouseCities: locationData.warehouseCities } : {}),
+        ...(formData.has("productionCities") ? { productionCities: locationData.productionCities } : {}),
+        ...(formData.has("storeCities") ? { storeCities: locationData.storeCities } : {}),
+        ...(formData.has("phone") && locationData.phone ? { phone: locationData.phone } : {}),
+        ...(formData.has("email") && locationData.email ? { email: locationData.email } : {}),
+        ...(formData.has("city") && locationData.city ? { city: locationData.city } : {}),
+        ...(formData.has("website") && locationData.website ? { website: locationData.website } : {}),
       },
     });
   }
@@ -816,7 +816,8 @@ export async function createStoreAction(formData: FormData) {
     status: (str(formData, "status") || "NEW") as never,
     productCount: num(formData, "productCount"),
     responsibleId: str(formData, "responsibleId") || user.id,
-    storeUrl: str(formData, "storeUrl"),
+    contactName: str(formData, "contactName"),
+    contactPhone: str(formData, "contactPhone"),
     comment: str(formData, "comment"),
     registeredAt: date(formData, "registeredAt") || new Date(),
     createdById: user.id,
@@ -853,7 +854,8 @@ export async function updateStoreAction(id: string, formData: FormData) {
     status: newStatus as never,
     productCount: num(formData, "productCount"),
     responsibleId: str(formData, "responsibleId") || before.responsibleId,
-    storeUrl: str(formData, "storeUrl"),
+    contactName: str(formData, "contactName"),
+    contactPhone: str(formData, "contactPhone"),
     comment: str(formData, "comment"),
     publishedAt:
       (newStatus === "PUBLISHED" || newStatus === "ACTIVE") && !before.publishedAt
@@ -882,6 +884,13 @@ export async function moveStoreStatusAction(storeId: string, status: string) {
   const user = await requireUser();
   await changeStatus({ entity: "store", id: storeId, newStatus: status, user });
   revalidateEntity(["/stores", `/stores/${storeId}`, "/dashboard"]);
+  return { ok: true };
+}
+
+export async function movePersonStatusAction(personId: string, status: string) {
+  const user = await requireUser();
+  await changeStatus({ entity: "person", id: personId, newStatus: status, user });
+  revalidateEntity(["/people", `/people/${personId}`, "/dashboard", "/analytics"]);
   return { ok: true };
 }
 
@@ -1100,12 +1109,12 @@ async function createUserFromForm(formData: FormData) {
   const roleRaw = str(formData, "role") || "MANAGER";
 
   if (!name) throw new Error("Укажите имя — оно появится в списке ответственных");
-  if (!email || !email.includes("@")) throw new Error("Укажите корректный email");
+  if (!email) throw new Error("Укажите логин");
   if (password.length < 6) throw new Error("Пароль не короче 6 символов");
   if (!isSelectableRole(roleRaw)) throw new Error("Выберите роль: Менеджер или Руководитель");
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) throw new Error("Пользователь с таким email уже есть");
+  if (existing) throw new Error("Пользователь с таким логином уже есть");
 
   const passwordHash = await bcrypt.hash(password, 10);
   return prisma.user.create({
@@ -1242,6 +1251,7 @@ export async function createPersonAction(formData: FormData) {
       name,
       phone: str(formData, "phone"),
       city: str(formData, "city"),
+      status: (str(formData, "status") || "NEW") as never,
       comment: str(formData, "comment"),
       responsibleId: str(formData, "responsibleId") || user.id,
       createdById: user.id,
@@ -1261,17 +1271,22 @@ export async function createPersonAction(formData: FormData) {
 export async function updatePersonAction(id: string, formData: FormData) {
   const user = await requireUser();
   const before = await prisma.person.findUniqueOrThrow({ where: { id } });
+  const newStatus = str(formData, "status") || before.status;
   const after = await prisma.person.update({
     where: { id },
     data: {
       name: str(formData, "name") || before.name,
       phone: str(formData, "phone"),
       city: str(formData, "city"),
+      status: newStatus as never,
       comment: str(formData, "comment"),
       responsibleId: str(formData, "responsibleId") || before.responsibleId,
     },
   });
   await trackFieldChanges("person", id, user, before as never, after as never);
-  revalidateEntity([`/people/${id}`, "/people", "/dashboard"]);
+  if (before.status !== newStatus) {
+    await changeStatus({ entity: "person", id, newStatus, user });
+  }
+  revalidateEntity([`/people/${id}`, "/people", "/dashboard", "/analytics"]);
   redirect(`/people/${id}`);
 }

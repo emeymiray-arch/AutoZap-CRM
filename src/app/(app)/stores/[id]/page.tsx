@@ -58,7 +58,8 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
                 </option>
               ))}
             </Select>
-            <Input name="storeUrl" label="Ссылка" defaultValue={store.storeUrl || ""} />
+            <Input name="contactName" label="Контакт, имя" defaultValue={store.contactName || ""} />
+            <Input name="contactPhone" label="Контакт, телефон" type="tel" defaultValue={store.contactPhone || ""} />
             <Select name="responsibleId" label="Ответственный" defaultValue={store.responsibleId || ""}>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>

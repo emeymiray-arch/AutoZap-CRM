@@ -21,6 +21,7 @@ const statusField: Partial<Record<EntityKey, string>> = {
   partner: "status",
   catalog: "status",
   store: "status",
+  person: "status",
   task: "status",
 };
 

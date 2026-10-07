@@ -88,6 +88,22 @@ export const STORE_STATUS_LABELS: Record<string, string> = {
   ARCHIVED: "Архив",
 };
 
+/** Воронка частников (как у магазинов) */
+export const PERSON_FUNNEL_ORDER = [
+  "NEW",
+  "CONTACTED",
+  "ANSWERED",
+  "INTERESTED",
+  "PROPOSAL_SENT",
+  "AGREED",
+  "ACTIVE",
+  "REJECTED",
+] as const;
+
+export const PERSON_STATUS_LABELS: Record<string, string> = {
+  ...STORE_STATUS_LABELS,
+};
+
 /** Воронка мелких магазинов */
 export const STORE_FUNNEL_ORDER = [
   "NEW",
@@ -214,6 +230,11 @@ export function storeFunnelStage(status: string): string {
     ARCHIVED: "REJECTED",
   };
   return map[status] || "NEW";
+}
+
+/** Статус частника → колонка воронки */
+export function personFunnelStage(status: string): string {
+  return storeFunnelStage(status);
 }
 
 export function statusTone(status: string): "success" | "warning" | "error" | "neutral" | "info" {

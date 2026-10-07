@@ -26,7 +26,13 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
         <form action={action} className="grid gap-3">
           <Input name="name" label="Название" required defaultValue={store.name} />
           <Input name="region" label="Город" defaultValue={store.region || ""} />
-          <Input name="storeUrl" label="Ссылка" defaultValue={store.storeUrl || ""} />
+          <div className="rounded-xl bg-slate-50 p-3">
+            <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input name="contactName" label="Имя" defaultValue={store.contactName || ""} />
+              <Input name="contactPhone" label="Телефон" type="tel" defaultValue={store.contactPhone || ""} />
+            </div>
+          </div>
           <Select name="status" label="Этап" defaultValue={store.status}>
             {statusOptions.map((k) => (
               <option key={k} value={k}>

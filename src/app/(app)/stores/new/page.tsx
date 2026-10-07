@@ -15,7 +15,13 @@ export default async function NewStorePage() {
         <form action={createStoreAction} className="grid gap-3">
           <Input name="name" label="Название" required />
           <Input name="region" label="Город" placeholder="Москва" />
-          <Input name="storeUrl" label="Ссылка" placeholder="https://…" />
+          <div className="rounded-xl bg-slate-50 p-3">
+            <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input name="contactName" label="Имя" placeholder="Иван" />
+              <Input name="contactPhone" label="Телефон" type="tel" placeholder="+7 …" />
+            </div>
+          </div>
           <Select name="status" label="Этап" defaultValue="NEW">
             {STORE_FUNNEL_ORDER.map((k) => (
               <option key={k} value={k}>
