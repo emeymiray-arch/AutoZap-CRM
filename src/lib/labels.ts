@@ -27,6 +27,7 @@ export const DEAL_STAGE_LABELS: Record<string, string> = {
 };
 
 export const PARTNER_STATUS_LABELS: Record<string, string> = {
+  NO_ANSWER: "Не ответили на звонок",
   NEW: "Написали",
   CONTACTED: "Связались",
   ANSWERED: "Ответили",
@@ -54,6 +55,7 @@ export const PARTNER_STATUS_LABELS: Record<string, string> = {
 
 /** Воронка привлечения крупных компаний / партнёров */
 export const PARTNER_FUNNEL_ORDER = [
+  "NO_ANSWER",
   "NEW",
   "CONTACTED",
   "ANSWERED",
@@ -69,6 +71,7 @@ export const PARTNER_FUNNEL_ORDER = [
 ] as const;
 
 export const STORE_STATUS_LABELS: Record<string, string> = {
+  NO_ANSWER: "Не ответили на звонок",
   NEW: "Новый",
   CONTACTED: "Связались",
   ANSWERED: "Ответили",
@@ -90,6 +93,7 @@ export const STORE_STATUS_LABELS: Record<string, string> = {
 
 /** Воронка частников (как у магазинов) */
 export const PERSON_FUNNEL_ORDER = [
+  "NO_ANSWER",
   "NEW",
   "CONTACTED",
   "ANSWERED",
@@ -106,6 +110,7 @@ export const PERSON_STATUS_LABELS: Record<string, string> = {
 
 /** Воронка мелких магазинов */
 export const STORE_FUNNEL_ORDER = [
+  "NO_ANSWER",
   "NEW",
   "CONTACTED",
   "ANSWERED",

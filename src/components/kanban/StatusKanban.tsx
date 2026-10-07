@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
   useDroppable,
@@ -25,7 +24,115 @@ export type KanbanCard = {
   meta?: string | null;
 };
 
-function Card({
+const LONG_PRESS_MS = 2000;
+const MOVE_CANCEL_PX = 10;
+const MOBILE_MQ = "(max-width: 767px)";
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isMobile;
+}
+
+function CardBody({ item, href }: { item: KanbanCard; href: (id: string) => string }) {
+  return (
+    <>
+      <Link
+        href={href(item.id)}
+        className="text-sm font-medium leading-snug text-slate-900 hover:underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {item.title}
+      </Link>
+      {(item.subtitle || item.meta) && (
+        <div className="mt-0.5 truncate text-xs text-slate-500 md:mt-1">
+          {item.subtitle || item.meta}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Карточка для телефона: долгое нажатие 2с → выбор этапа */
+function MobileCard({
+  item,
+  href,
+  onLongPress,
+}: {
+  item: KanbanCard;
+  href: (id: string) => string;
+  onLongPress: (item: KanbanCard) => void;
+}) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const [pressing, setPressing] = useState(false);
+
+  function clear() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    start.current = null;
+    setPressing(false);
+  }
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (e.button !== 0) return;
+    start.current = { x: e.clientX, y: e.clientY };
+    setPressing(true);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      setPressing(false);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try {
+          navigator.vibrate(30);
+        } catch {
+          /* ignore */
+        }
+      }
+      onLongPress(item);
+    }, LONG_PRESS_MS);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!start.current || !timer.current) return;
+    const dx = Math.abs(e.clientX - start.current.x);
+    const dy = Math.abs(e.clientY - start.current.y);
+    if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) clear();
+  }
+
+  useEffect(() => () => clear(), []);
+
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={clear}
+      onPointerCancel={clear}
+      onContextMenu={(e) => e.preventDefault()}
+      className={`touch-manipulation select-none rounded-md border border-slate-200 bg-white p-2 shadow-sm transition ${
+        pressing ? "scale-[0.98] ring-2 ring-teal-500/40" : ""
+      }`}
+      style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}
+    >
+      <CardBody item={item} href={href} />
+      {pressing ? (
+        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-teal-500"
+            style={{ animation: `kanban-longpress ${LONG_PRESS_MS}ms linear forwards` }}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DragCard({
   item,
   href,
   dragging,
@@ -48,22 +155,11 @@ function Card({
       }}
       {...listeners}
       {...attributes}
-      className={`touch-manipulation cursor-grab rounded-md border border-slate-200 bg-white p-2 shadow-sm active:cursor-grabbing md:p-2.5 ${
+      className={`cursor-grab rounded-md border border-slate-200 bg-white p-2.5 shadow-sm active:cursor-grabbing ${
         dragging ? "shadow-md ring-2 ring-teal-600/30" : ""
       }`}
     >
-      <Link
-        href={href(item.id)}
-        className="text-sm font-medium leading-snug text-slate-900 hover:underline"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {item.title}
-      </Link>
-      {(item.subtitle || item.meta) && (
-        <div className="mt-0.5 truncate text-xs text-slate-500 md:mt-1">
-          {item.subtitle || item.meta}
-        </div>
-      )}
+      <CardBody item={item} href={href} />
     </div>
   );
 }
@@ -73,62 +169,107 @@ function Column({
   label,
   items,
   href,
-  showEmptyOnMobile,
+  mobile,
+  onLongPress,
 }: {
   stage: string;
   label: string;
   items: KanbanCard[];
   href: (id: string) => string;
-  /** пустой этап на телефоне виден только во время drag */
-  showEmptyOnMobile?: boolean;
+  mobile?: boolean;
+  onLongPress?: (item: KanbanCard) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const { setNodeRef, isOver } = useDroppable({ id: stage, disabled: mobile });
   const empty = items.length === 0;
+  if (mobile && empty) return null;
 
   return (
     <div
-      ref={setNodeRef}
-      className={[
-        "flex w-full shrink-0 flex-col rounded-lg border bg-slate-50 md:w-64",
-        isOver ? "border-teal-600 bg-teal-50/40" : "border-slate-200",
-        // телефон: пустые этапы скрыты, пока не тянут карточку
-        empty && !showEmptyOnMobile ? "hidden md:flex" : "",
-        // телефон при drag: компактная полоска-цель
-        empty && showEmptyOnMobile
-          ? "min-h-0 flex-row items-center justify-between px-3 py-2.5 md:min-h-0 md:flex-col md:items-stretch md:justify-start md:px-0 md:py-0"
-          : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      ref={mobile ? undefined : setNodeRef}
+      className={`flex w-full shrink-0 flex-col rounded-lg border bg-slate-50 md:w-64 ${
+        isOver ? "border-teal-600 bg-teal-50/40" : "border-slate-200"
+      }`}
     >
-      <div
-        className={`flex items-center justify-between gap-2 border-slate-200 px-3 py-2 ${
-          empty && showEmptyOnMobile ? "w-full border-0 p-0 md:border-b md:px-3 md:py-2" : "border-b"
-        }`}
-      >
-        <Badge
-          status={stage}
-          className={`max-w-[80%] truncate text-[10px] md:text-xs ${
-            empty && showEmptyOnMobile ? "border-0 bg-transparent px-0 text-xs font-medium text-slate-600" : ""
-          }`}
-        >
+      <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+        <Badge status={stage} className="max-w-[80%] truncate text-[10px] md:text-xs">
           {label}
         </Badge>
-        {empty && showEmptyOnMobile ? (
-          <span className="shrink-0 text-[11px] text-slate-400 md:hidden">отпустить</span>
-        ) : (
-          <span className="shrink-0 text-xs tabular-nums text-slate-500">{items.length}</span>
-        )}
+        <span className="shrink-0 text-xs tabular-nums text-slate-500">{items.length}</span>
       </div>
-      <div
-        className={`flex-col gap-1.5 p-2 md:flex md:min-h-[120px] md:gap-2 ${
-          empty && showEmptyOnMobile ? "hidden md:flex" : "flex"
-        } ${empty ? "min-h-[2.5rem]" : ""}`}
-      >
-        {items.map((item) => (
-          <Card key={item.id} item={item} href={href} />
-        ))}
-        {empty ? <p className="text-center text-[11px] text-slate-400">Перетащите сюда</p> : null}
+      <div className={`flex flex-col gap-1.5 p-2 md:min-h-[120px] md:gap-2 ${empty ? "min-h-[2.5rem]" : ""}`}>
+        {items.map((item) =>
+          mobile && onLongPress ? (
+            <MobileCard key={item.id} item={item} href={href} onLongPress={onLongPress} />
+          ) : (
+            <DragCard key={item.id} item={item} href={href} />
+          ),
+        )}
+        {empty ? <p className="hidden text-center text-[11px] text-slate-400 md:block">Перетащите сюда</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function StagePicker({
+  item,
+  stages,
+  labels,
+  onSelect,
+  onClose,
+}: {
+  item: KanbanCard;
+  stages: readonly string[];
+  labels: Record<string, string>;
+  onSelect: (stage: string) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center md:hidden" role="dialog" aria-modal>
+      <button type="button" className="absolute inset-0 bg-slate-950/40" onClick={onClose} aria-label="Закрыть" />
+      <div className="relative z-10 max-h-[70dvh] w-full max-w-lg overflow-hidden rounded-t-2xl bg-white shadow-xl">
+        <div className="border-b border-slate-100 px-4 py-3">
+          <div className="text-sm font-semibold text-slate-900">Этап воронки</div>
+          <div className="mt-0.5 truncate text-xs text-slate-500">{item.title}</div>
+        </div>
+        <ul className="overflow-y-auto px-2 py-2" style={{ maxHeight: "calc(70dvh - 4rem)" }}>
+          {stages.map((stage) => {
+            const current = stage === item.stage;
+            return (
+              <li key={stage}>
+                <button
+                  type="button"
+                  disabled={current}
+                  onClick={() => onSelect(stage)}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm ${
+                    current
+                      ? "bg-teal-50 font-medium text-teal-900"
+                      : "text-slate-800 active:bg-slate-50"
+                  }`}
+                >
+                  <span>{labels[stage] || stage}</span>
+                  {current ? <span className="text-xs text-teal-700">сейчас</span> : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="border-t border-slate-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl bg-slate-100 py-2.5 text-sm font-medium text-slate-700"
+          >
+            Отмена
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -149,15 +290,14 @@ export function StatusKanban({
 }) {
   const [items, setItems] = useState(initialItems);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [dndReady, setDndReady] = useState(false);
+  const [pickerItem, setPickerItem] = useState<KanbanCard | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const isMobile = useIsMobile();
   const [, startTransition] = useTransition();
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   useEffect(() => {
-    setDndReady(true);
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -176,7 +316,19 @@ export function StatusKanban({
   }, [items, stages]);
 
   const active = activeId ? items.find((i) => i.id === activeId) : null;
-  const dragging = Boolean(activeId);
+
+  function moveTo(id: string, target: string) {
+    const item = items.find((i) => i.id === id);
+    if (!item || target === item.stage) return;
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, stage: target } : i)));
+    startTransition(async () => {
+      try {
+        await onMove(id, target);
+      } catch {
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, stage: item.stage } : i)));
+      }
+    });
+  }
 
   function onDragStart(e: DragStartEvent) {
     setActiveId(String(e.active.id));
@@ -187,23 +339,11 @@ export function StatusKanban({
     const id = String(e.active.id);
     const overId = e.over?.id ? String(e.over.id) : null;
     if (!overId) return;
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-
     const target = stages.includes(overId)
       ? overId
       : items.find((i) => i.id === overId)?.stage;
-
-    if (!target || target === item.stage) return;
-
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, stage: target } : i)));
-    startTransition(async () => {
-      try {
-        await onMove(id, target);
-      } catch {
-        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, stage: item.stage } : i)));
-      }
-    });
+    if (!target) return;
+    moveTo(id, target);
   }
 
   const board = (
@@ -215,47 +355,54 @@ export function StatusKanban({
           label={labels[stage] || stage}
           items={byStage[stage] || []}
           href={href}
-          showEmptyOnMobile={dragging}
         />
       ))}
     </div>
   );
 
-  if (!dndReady) {
+  // До монтирования / на телефоне — без dnd-kit
+  if (!mounted || isMobile) {
     return (
-      <div className="flex flex-col gap-2 pb-4 md:flex-row md:gap-3 md:overflow-x-auto" aria-busy="true">
-        {stages
-          .filter((s) => (byStage[s] || []).length > 0)
-          .map((stage) => (
-            <div key={stage} className="w-full rounded-lg border border-slate-200 bg-slate-50 md:w-64">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
-                <Badge status={stage} className="text-[10px] md:text-xs">
-                  {labels[stage] || stage}
-                </Badge>
-                <span className="text-xs text-slate-500">{(byStage[stage] || []).length}</span>
-              </div>
-              <div className="flex flex-col gap-1.5 p-2">
-                {(byStage[stage] || []).map((item) => (
-                  <div key={item.id} className="rounded-md border border-slate-200 bg-white p-2 shadow-sm">
-                    <div className="text-sm font-medium text-slate-900">{item.title}</div>
-                    {(item.subtitle || item.meta) && (
-                      <div className="mt-0.5 truncate text-xs text-slate-500">
-                        {item.subtitle || item.meta}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-      </div>
+      <>
+        <style>{`@keyframes kanban-longpress{from{width:0%}to{width:100%}}`}</style>
+        <div className="mb-2 text-xs text-slate-500 md:hidden">
+          Удерживайте карточку 2 сек, чтобы сменить этап
+        </div>
+        <div className="flex flex-col gap-2 pb-4">
+          {stages
+            .filter((s) => (byStage[s] || []).length > 0)
+            .map((stage) => (
+              <Column
+                key={stage}
+                stage={stage}
+                label={labels[stage] || stage}
+                items={byStage[stage] || []}
+                href={href}
+                mobile
+                onLongPress={setPickerItem}
+              />
+            ))}
+        </div>
+        {pickerItem ? (
+          <StagePicker
+            item={pickerItem}
+            stages={stages}
+            labels={labels}
+            onClose={() => setPickerItem(null)}
+            onSelect={(stage) => {
+              moveTo(pickerItem.id, stage);
+              setPickerItem(null);
+            }}
+          />
+        ) : null}
+      </>
     );
   }
 
   return (
     <DndContext id="autozap-status-kanban" sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       {board}
-      <DragOverlay>{active ? <Card item={active} href={href} dragging /> : null}</DragOverlay>
+      <DragOverlay>{active ? <DragCard item={active} href={href} dragging /> : null}</DragOverlay>
     </DndContext>
   );
 }
