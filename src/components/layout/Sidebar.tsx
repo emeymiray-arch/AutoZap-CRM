@@ -4,17 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Users,
-  Contact,
   Handshake,
   Store,
   CheckSquare,
-  Activity,
   BarChart3,
   Archive,
   Settings,
-  Briefcase,
   Wallet,
+  UserRound,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,17 +22,13 @@ const items: {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
-  group?: string;
   visible: (role: Role) => boolean;
 }[] = [
   { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard, visible: () => true },
   { href: "/partners", label: "Партнёры", icon: Handshake, visible: () => true },
   { href: "/stores", label: "Магазины", icon: Store, visible: () => true },
-  { href: "/crm/leads", label: "Лиды", icon: Users, group: "CRM", visible: () => true },
-  { href: "/crm/contacts", label: "Контакты", icon: Contact, group: "CRM", visible: () => true },
-  { href: "/crm/deals", label: "Сделки", icon: Briefcase, group: "CRM", visible: () => true },
+  { href: "/people", label: "Частники", icon: UserRound, visible: () => true },
   { href: "/tasks", label: "Задачи", icon: CheckSquare, visible: () => true },
-  { href: "/activities", label: "Активности", icon: Activity, visible: () => true },
   { href: "/analytics", label: "Аналитика", icon: BarChart3, visible: canSeeAnalytics },
   { href: "/payroll", label: "Дневник ЗП", icon: Wallet, visible: canAccessPayroll },
   { href: "/archive", label: "Архив", icon: Archive, visible: canViewAll },
@@ -52,7 +45,6 @@ export function Sidebar({
   mobile?: boolean;
 }) {
   const pathname = usePathname();
-  let lastGroup: string | undefined;
   const visibleItems = items.filter((item) => item.visible(role));
 
   return (
@@ -81,28 +73,20 @@ export function Sidebar({
       <nav className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-2">
         {visibleItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          const showGroup = item.group && item.group !== lastGroup;
-          if (item.group) lastGroup = item.group;
           const Icon = item.icon;
           return (
-            <div key={item.href}>
-              {showGroup && (
-                <div className="px-2.5 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  {item.group}
-                </div>
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "flex min-h-11 items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition md:min-h-0 md:py-2",
+                active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-900 hover:text-white",
               )}
-              <Link
-                href={item.href}
-                onClick={onNavigate}
-                className={cn(
-                  "flex min-h-11 items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition md:min-h-0 md:py-2",
-                  active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-900 hover:text-white",
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0 opacity-80" />
-                {item.label}
-              </Link>
-            </div>
+            >
+              <Icon className="h-4 w-4 shrink-0 opacity-80" />
+              {item.label}
+            </Link>
           );
         })}
       </nav>

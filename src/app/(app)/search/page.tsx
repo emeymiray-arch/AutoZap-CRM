@@ -16,15 +16,17 @@ export default async function SearchPage({
   return (
     <div>
       <PageHeader title="Поиск" description={q ? `Результаты по «${q}»` : "Введите запрос в верхней панели"} />
-      {!result && <Card><p className="text-sm text-slate-500">Минимум 2 символа</p></Card>}
+      {!result && (
+        <Card>
+          <p className="text-sm text-slate-500">Минимум 2 символа</p>
+        </Card>
+      )}
       {result && (
         <div className="grid gap-4 md:grid-cols-2">
           {(
             [
               ["Партнёры", result.partners, "/partners", (r: { name: string }) => r.name],
-              ["Контакты", result.contacts, "/crm/contacts", (r: { firstName: string; lastName: string | null }) => `${r.firstName} ${r.lastName || ""}`],
-              ["Лиды", result.leads, "/crm/leads", (r: { title: string }) => r.title],
-              ["Сделки", result.deals, "/crm/deals", (r: { title: string }) => r.title],
+              ["Частники", result.people, "/people", (r: { name: string }) => r.name],
               ["Магазины", result.stores, "/stores", (r: { name: string }) => r.name],
               ["Задачи", result.tasks, "/tasks", (r: { title: string }) => r.title],
             ] as const

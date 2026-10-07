@@ -5,7 +5,7 @@ export const SELECTABLE_ROLES: { value: Role; label: string; hint: string }[] = 
   {
     value: "MANAGER",
     label: "Менеджер",
-    hint: "Видит общую базу команды, работает с лидами, сделками и задачами",
+    hint: "Видит общую базу, партнёров, магазины и свои задачи",
   },
   {
     value: "MANAGER_LEAD",
@@ -66,6 +66,11 @@ export function canSeeTeamRecords(role: Role): boolean {
 export function responsibleScope(user: SessionUser): { responsibleId?: string } {
   if (canSeeTeamRecords(user.role)) return {};
   return { responsibleId: user.id };
+}
+
+/** Админ и руководитель могут ставить задачи коллегам и всей команде */
+export function canAssignTasksToOthers(role: Role): boolean {
+  return role === "ADMIN" || role === "MANAGER_LEAD";
 }
 
 export function assertHardDelete(user: SessionUser) {

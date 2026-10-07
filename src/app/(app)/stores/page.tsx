@@ -1,16 +1,13 @@
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { PageHeader, formatDate } from "@/components/layout/Page";
+import { PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/Button";
-import { DataTable } from "@/components/ui/DataTable";
-import { Badge } from "@/components/ui/Badge";
-import { ListFilters } from "@/components/crm/ListFilters";
-import { DataTools } from "@/components/crm/DataTools";
 import { ViewTabs } from "@/components/crm/ViewTabs";
+import { EntityCard, EntityCardGrid } from "@/components/crm/EntityCard";
 import { StoreKanban } from "@/components/kanban/StoreKanban";
-import { STORE_FUNNEL_ORDER, STORE_STATUS_LABELS, storeFunnelStage } from "@/lib/labels";
-import { parseListParams, scopeWhere, usersForSelect } from "@/lib/list-query";
+import { STORE_STATUS_LABELS, storeFunnelStage } from "@/lib/labels";
+import { parseListParams, scopeWhere } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
 
 export default async function StoresPage({
@@ -23,19 +20,17 @@ export default async function StoresPage({
   const raw = await searchParams;
   const sp = parseListParams(raw);
   const view = typeof raw.view === "string" && raw.view === "funnel" ? "funnel" : "cards";
-  const users = await usersForSelect();
 
   const where: Prisma.StoreWhereInput = {
     archivedAt: null,
     ...scopeWhere(session.user),
     ...(sp.status ? { status: sp.status } : {}),
-    ...(sp.responsibleId ? { responsibleId: sp.responsibleId } : {}),
-    ...(sp.region ? { region: { contains: sp.region, mode: "insensitive" as const } } : {}),
     ...(sp.q
       ? {
           OR: [
             { name: { contains: sp.q, mode: "insensitive" as const } },
             { storeUrl: { contains: sp.q, mode: "insensitive" as const } },
+            { region: { contains: sp.q, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -60,14 +55,11 @@ export default async function StoresPage({
     <div>
       <PageHeader
         title="Магазины"
-        description={`${rows.length} записей · мелкие магазины (отдельно от компаний)`}
+        description={`${rows.length} точек`}
         actions={
-          <>
-            <DataTools entity="stores" />
-            <Button href="/stores/new" size="sm">
-              + Создать
-            </Button>
-          </>
+          <Button href="/stores/new" size="sm">
+            + Магазин
+          </Button>
         }
       />
       <Suspense>
@@ -76,37 +68,29 @@ export default async function StoresPage({
 
       {view === "funnel" ? (
         <StoreKanban items={funnelItems} />
+      ) : rows.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+          Магазинов пока нет
+        </div>
       ) : (
-        <>
-          <Suspense>
-            <ListFilters
-              entityType="stores"
-              users={users}
-              showRegion
-              statusOptions={STORE_FUNNEL_ORDER.map((value) => ({
-                value,
-                label: STORE_STATUS_LABELS[value],
-              }))}
+        <EntityCardGrid>
+          {rows.map((r) => (
+            <EntityCard
+              key={r.id}
+              href={`/stores/${r.id}`}
+              title={r.name}
+              badge={{
+                status: r.status,
+                label: STORE_STATUS_LABELS[r.status] || r.status,
+              }}
+              lines={[
+                { label: "Город", value: r.region },
+                { label: "Ссылка", value: r.storeUrl },
+                { label: "Ответственный", value: r.responsible?.name },
+              ]}
             />
-          </Suspense>
-          <DataTable
-            rows={rows}
-            href={(r) => `/stores/${r.id}`}
-            columns={[
-              { key: "name", header: "Название", render: (r) => r.name },
-              { key: "region", header: "Регион", render: (r) => r.region || "—" },
-              {
-                key: "status",
-                header: "Этап",
-                render: (r) => (
-                  <Badge status={r.status}>{STORE_STATUS_LABELS[r.status] || r.status}</Badge>
-                ),
-              },
-              { key: "resp", header: "Ответственный", render: (r) => r.responsible?.name || "—" },
-              { key: "updated", header: "Изменён", render: (r) => formatDate(r.updatedAt) },
-            ]}
-          />
-        </>
+          ))}
+        </EntityCardGrid>
       )}
     </div>
   );

@@ -24,6 +24,16 @@ export default auth((req) => {
 
   if (isApiAuth || isHealth || isCron) return NextResponse.next();
 
+  if (
+    path.startsWith("/crm/contacts") ||
+    path.startsWith("/crm/leads") ||
+    path.startsWith("/crm/deals") ||
+    path.startsWith("/crm/companies") ||
+    path.startsWith("/activities")
+  ) {
+    return NextResponse.redirect(new URL("/partners", req.nextUrl.origin));
+  }
+
   if (!isLoggedIn && !isPublic) {
     const url = new URL("/login", req.nextUrl.origin);
     url.searchParams.set("callbackUrl", path);

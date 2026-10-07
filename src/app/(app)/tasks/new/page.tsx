@@ -3,36 +3,31 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { createTaskAction } from "@/lib/actions";
-import { contactsForSelect, partnersForSelect } from "@/lib/list-query";
-import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
-import { CompanyField } from "@/components/crm/CompanyField";
-import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/labels";
-import { prisma } from "@/lib/db";
+import { partnersForSelect, usersForSelect } from "@/lib/list-query";
+import { canAssignTasksToOthers } from "@/lib/permissions";
+import { TASK_PRIORITY_LABELS } from "@/lib/labels";
+import { TaskAssigneeFields } from "@/components/crm/TaskAssigneeFields";
 
 export default async function NewTaskPage() {
-  await auth();
-  const [contacts, partners, leads, deals] = await Promise.all([
-    contactsForSelect(),
-    partnersForSelect(),
-    prisma.lead.findMany({
-      where: { archivedAt: null },
-      select: { id: true, title: true },
-      take: 200,
-    }),
-    prisma.deal.findMany({
-      where: { archivedAt: null },
-      select: { id: true, title: true },
-      take: 200,
-    }),
-  ]);
+  const session = await auth();
+  if (!session?.user) return null;
+  const canAssign = canAssignTasksToOthers(session.user.role);
+  const [partners, users] = await Promise.all([partnersForSelect(), usersForSelect()]);
+
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHeader title="Новая задача" />
+    <div className="mx-auto max-w-xl">
+      <PageHeader
+        title="Новая задача"
+        description={
+          canAssign
+            ? "Себе, коллеге или всей команде"
+            : "Вы можете поставить задачу себе"
+        }
+      />
       <Card>
-        <form action={createTaskAction} className="grid gap-3 md:grid-cols-2">
-          <Input name="title" label="Название" required className="md:col-span-2" />
-          <Textarea name="description" label="Описание" className="md:col-span-2" />
-          <ResponsibleSelect />
+        <form action={createTaskAction} className="grid gap-3">
+          <Input name="title" label="Название" required placeholder="Что нужно сделать" />
+          <Textarea name="description" label="Описание" rows={3} placeholder="По желанию" />
           <Input name="deadline" label="Дедлайн" type="datetime-local" />
           <Select name="priority" label="Приоритет" defaultValue="MEDIUM">
             {Object.entries(TASK_PRIORITY_LABELS).map(([k, v]) => (
@@ -41,39 +36,14 @@ export default async function NewTaskPage() {
               </option>
             ))}
           </Select>
-          <Select name="status" label="Статус" defaultValue="NEW">
-            {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </Select>
-          <CompanyField />
-          <Select name="contactId" label="Контакт">
-            <option value="">—</option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.firstName} {c.lastName || ""}
-              </option>
-            ))}
-          </Select>
-          <Select name="leadId" label="Лид">
-            <option value="">—</option>
-            {leads.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.title}
-              </option>
-            ))}
-          </Select>
-          <Select name="dealId" label="Сделка">
-            <option value="">—</option>
-            {deals.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.title}
-              </option>
-            ))}
-          </Select>
-          <Select name="partnerId" label="Партнёр">
+
+          <TaskAssigneeFields
+            canAssignOthers={canAssign}
+            users={users}
+            currentUserId={session.user.id}
+          />
+
+          <Select name="partnerId" label="Партнёр (необязательно)">
             <option value="">—</option>
             {partners.map((p) => (
               <option key={p.id} value={p.id}>
@@ -81,9 +51,8 @@ export default async function NewTaskPage() {
               </option>
             ))}
           </Select>
-          <div className="md:col-span-2">
-            <Button type="submit">Создать задачу</Button>
-          </div>
+
+          <Button type="submit">Поставить задачу</Button>
         </form>
       </Card>
     </div>

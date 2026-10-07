@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { updateStoreAction } from "@/lib/actions";
 import { usersForSelect } from "@/lib/list-query";
 import { STORE_FUNNEL_ORDER, STORE_STATUS_LABELS } from "@/lib/labels";
-import { RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditStorePage({ params }: { params: Promise<{ id: string }> }) {
   await auth();
@@ -21,11 +20,13 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
     : ([store.status, ...STORE_FUNNEL_ORDER] as string[]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-lg">
       <PageHeader title={`Изменить: ${store.name}`} />
       <Card>
-        <form action={action} className="grid gap-3 md:grid-cols-2">
-          <Input name="name" label="Название" required defaultValue={store.name} className="md:col-span-2" />
+        <form action={action} className="grid gap-3">
+          <Input name="name" label="Название" required defaultValue={store.name} />
+          <Input name="region" label="Город" defaultValue={store.region || ""} />
+          <Input name="storeUrl" label="Ссылка" defaultValue={store.storeUrl || ""} />
           <Select name="status" label="Этап" defaultValue={store.status}>
             {statusOptions.map((k) => (
               <option key={k} value={k}>
@@ -33,8 +34,6 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
               </option>
             ))}
           </Select>
-          <RegionSelect defaultValue={store.region} />
-          <Input name="storeUrl" label="Ссылка" defaultValue={store.storeUrl || ""} />
           <Select name="responsibleId" label="Ответственный" defaultValue={store.responsibleId || ""}>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
@@ -42,10 +41,8 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
               </option>
             ))}
           </Select>
-          <Textarea name="comment" label="Комментарий" defaultValue={store.comment || ""} className="md:col-span-2" />
-          <div className="md:col-span-2">
-            <Button type="submit">Сохранить</Button>
-          </div>
+          <Textarea name="comment" label="Комментарий" defaultValue={store.comment || ""} rows={2} />
+          <Button type="submit">Сохранить</Button>
         </form>
       </Card>
     </div>

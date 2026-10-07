@@ -5,9 +5,8 @@ import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { updatePartnerAction } from "@/lib/actions";
-import { contactsForSelect, usersForSelect } from "@/lib/list-query";
+import { usersForSelect } from "@/lib/list-query";
 import { PARTNER_FUNNEL_ORDER, PARTNER_STATUS_LABELS } from "@/lib/labels";
-import { MultiCityField, RegionSelect } from "@/components/crm/GeoFields";
 
 export default async function EditPartnerPage({ params }: { params: Promise<{ id: string }> }) {
   await auth();
@@ -17,33 +16,42 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
     include: { company: true, contact: true },
   });
   if (!partner) notFound();
-  const [users, contacts] = await Promise.all([usersForSelect(), contactsForSelect()]);
+  const users = await usersForSelect();
   const action = updatePartnerAction.bind(null, id);
   const company = partner.company;
+  const c = partner.contact;
   const statusOptions = PARTNER_FUNNEL_ORDER.includes(partner.status as never)
     ? [...PARTNER_FUNNEL_ORDER]
     : [partner.status, ...PARTNER_FUNNEL_ORDER];
 
-  const contactOptions = [...contacts];
-  if (partner.contact && !contactOptions.some((c) => c.id === partner.contact!.id)) {
-    contactOptions.unshift({
-      id: partner.contact.id,
-      firstName: partner.contact.firstName,
-      lastName: partner.contact.lastName,
-      companyId: partner.contact.companyId,
-      position: partner.contact.position,
-      phone: partner.contact.phone,
-    });
-  }
-
-  const c = partner.contact;
-
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-lg">
       <PageHeader title={`Изменить: ${partner.name}`} />
       <Card>
-        <form action={action} className="grid gap-3 md:grid-cols-2">
-          <Input name="name" label="Название" required defaultValue={partner.name} className="md:col-span-2" />
+        <form action={action} className="grid gap-3">
+          {partner.contactId ? <input type="hidden" name="contactId" value={partner.contactId} /> : null}
+          <Input name="name" label="Название" required defaultValue={partner.name} />
+          <Input name="phone" label="Телефон" type="tel" defaultValue={company?.phone || ""} />
+          <Input name="city" label="Город" defaultValue={company?.city || partner.region || ""} />
+          <Input name="storeCities" label="Магазины" defaultValue={company?.storeCities || ""} />
+          <Input name="warehouseCities" label="Склады" defaultValue={company?.warehouseCities || ""} />
+          <Input name="productionCities" label="Производство" defaultValue={company?.productionCities || ""} />
+
+          <div className="rounded-xl bg-slate-50 p-3">
+            <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input name="contactFirstName" label="Имя" defaultValue={c?.firstName || ""} />
+              <Input name="contactPhone" label="Телефон" type="tel" defaultValue={c?.phone || ""} />
+            </div>
+          </div>
+
+          <Select name="status" label="Этап" defaultValue={partner.status}>
+            {statusOptions.map((k) => (
+              <option key={k} value={k}>
+                {PARTNER_STATUS_LABELS[k] || k}
+              </option>
+            ))}
+          </Select>
           <Select name="responsibleId" label="Ответственный" defaultValue={partner.responsibleId || ""}>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
@@ -51,68 +59,8 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
               </option>
             ))}
           </Select>
-          <Select name="status" label="Этап воронки" defaultValue={partner.status}>
-            {statusOptions.map((k) => (
-              <option key={k} value={k}>
-                {PARTNER_STATUS_LABELS[k] || k}
-              </option>
-            ))}
-          </Select>
-          <RegionSelect defaultValue={partner.region || company?.region} />
-
-          <div className="md:col-span-2 border-t border-slate-200 pt-3 mt-1">
-            <h3 className="text-sm font-semibold text-slate-800">Должностное лицо (контакт)</h3>
-            <p className="mt-0.5 text-[11px] text-slate-500">
-              Сохраняется в карточке партнёра и на доске «Контакты»
-            </p>
-          </div>
-          <Select
-            name="contactId"
-            label="Контакт"
-            className="md:col-span-2"
-            defaultValue={partner.contactId || ""}
-          >
-            <option value="">— создать новый из полей ниже —</option>
-            {contactOptions.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.firstName} {row.lastName || ""}
-                {row.position ? ` · ${row.position}` : ""}
-                {row.phone ? ` · ${row.phone}` : ""}
-              </option>
-            ))}
-          </Select>
-          <Input
-            name="contactFirstName"
-            label="Имя"
-            defaultValue={c?.firstName || ""}
-            placeholder={partner.contactId ? undefined : "Обязательно для нового контакта"}
-          />
-          <Input name="contactLastName" label="Фамилия" defaultValue={c?.lastName || ""} />
-          <Input name="contactPosition" label="Должность" defaultValue={c?.position || ""} />
-          <Input name="contactPhone" label="Телефон" defaultValue={c?.phone || ""} />
-          <Input
-            name="contactEmail"
-            label="Email"
-            type="email"
-            className="md:col-span-2"
-            defaultValue={c?.email || ""}
-          />
-
-          <MultiCityField
-            name="warehouseCities"
-            label="Склады"
-            defaultValue={company?.warehouseCities}
-          />
-          <MultiCityField
-            name="productionCities"
-            label="Производство"
-            defaultValue={company?.productionCities}
-          />
-          <MultiCityField name="storeCities" label="Магазины" defaultValue={company?.storeCities} />
-          <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} className="md:col-span-2" />
-          <div className="md:col-span-2">
-            <Button type="submit">Сохранить</Button>
-          </div>
+          <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} rows={2} />
+          <Button type="submit">Сохранить</Button>
         </form>
       </Card>
     </div>

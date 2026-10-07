@@ -15,7 +15,7 @@ import {
 } from "@/lib/entity-actions";
 import { findCompanyDuplicates, findContactDuplicates } from "@/lib/dedup";
 import { processOverdueTasks } from "@/lib/automations";
-import { canManageUsers, isSelectableRole, canAccessPayroll } from "@/lib/permissions";
+import { canManageUsers, isSelectableRole, canAccessPayroll, canAssignTasksToOthers } from "@/lib/permissions";
 import { citiesFromForm } from "@/lib/geo";
 
 function str(form: FormData, key: string) {
@@ -105,10 +105,10 @@ async function ensureCompanyMirror(
 
   const locationData = {
     name,
-    region: str(formData, "region"),
-    warehouseCities: citiesFromForm(formData, "warehouseCities"),
-    productionCities: citiesFromForm(formData, "productionCities"),
-    storeCities: citiesFromForm(formData, "storeCities"),
+    region: str(formData, "region") || str(formData, "city"),
+    warehouseCities: citiesFromForm(formData, "warehouseCities") || str(formData, "warehouseCities"),
+    productionCities: citiesFromForm(formData, "productionCities") || str(formData, "productionCities"),
+    storeCities: citiesFromForm(formData, "storeCities") || str(formData, "storeCities"),
     phone: str(formData, "phone"),
     email: str(formData, "email"),
     city: str(formData, "city"),
@@ -675,16 +675,14 @@ export async function createPartnerAction(formData: FormData) {
   if (!partnerName) throw new Error("Название обязательно");
   const companyId = await ensureCompanyMirror(formData, user, partnerName);
   const contactId = await resolvePartnerContactId(formData, user, companyId);
-  if (!contactId) {
-    throw new Error("Укажите должностное лицо: выберите контакт или заполните имя");
-  }
+  // Контакт необязателен, но если указали имя/телефон — создаётся автоматически
   const data = {
     name: partnerName,
     companyId,
     contactId,
     responsibleId: str(formData, "responsibleId") || user.id,
     status: (str(formData, "status") || "NEW") as never,
-    region: str(formData, "region"),
+    region: str(formData, "city") || str(formData, "region"),
     comment: str(formData, "comment"),
     nextContactAt: date(formData, "nextContactAt"),
     createdById: user.id,
@@ -733,7 +731,7 @@ export async function updatePartnerAction(id: string, formData: FormData) {
     contactId,
     responsibleId: str(formData, "responsibleId") || before.responsibleId,
     status: newStatus as never,
-    region: str(formData, "region"),
+    region: str(formData, "city") || str(formData, "region") || before.region,
     comment: str(formData, "comment"),
     nextContactAt: date(formData, "nextContactAt"),
     lastContactAt: date(formData, "lastContactAt"),
@@ -891,53 +889,77 @@ export async function moveStoreStatusAction(storeId: string, status: string) {
 
 export async function createTaskAction(formData: FormData) {
   const user = await requireUser();
-  const companyId = await resolveCompanyId(formData, user);
-  const data = {
-    title: str(formData, "title") || "",
-    description: str(formData, "description"),
-    responsibleId: str(formData, "responsibleId") || user.id,
-    creatorId: user.id,
-    companyId,
-    contactId: str(formData, "contactId"),
-    leadId: str(formData, "leadId"),
-    dealId: str(formData, "dealId"),
-    partnerId: str(formData, "partnerId"),
-    deadline: date(formData, "deadline"),
-    priority: (str(formData, "priority") || "MEDIUM") as never,
-    status: (str(formData, "status") || "NEW") as never,
-  };
-  if (!data.title) throw new Error("Название обязательно");
-  const task = await prisma.task.create({ data });
-  await writeAudit({
-    userId: user.id,
-    entityType: "task",
-    entityId: task.id,
-    action: "create",
-    newValue: task,
-    summary: `${user.name} создал(а) задачу`,
-  });
-  await logActivity({
-    type: "TASK_CREATED",
-    authorId: user.id,
-    comment: `Создана задача ${task.title}`,
-    companyId: task.companyId,
-    leadId: task.leadId,
-    dealId: task.dealId,
-    partnerId: task.partnerId,
-    taskId: task.id,
-  });
-  if (task.responsibleId) {
-    await prisma.notification.create({
+  const title = str(formData, "title") || "";
+  if (!title) throw new Error("Название обязательно");
+
+  const assignMode = str(formData, "assignMode") || "self";
+  const description = str(formData, "description");
+  const deadline = date(formData, "deadline");
+  const priority = (str(formData, "priority") || "MEDIUM") as never;
+  const partnerId = str(formData, "partnerId");
+
+  let assigneeIds: string[] = [];
+  if (assignMode === "all") {
+    if (!canAssignTasksToOthers(user.role)) {
+      throw new Error("Только администратор или руководитель могут ставить задачу всем");
+    }
+    const team = await prisma.user.findMany({
+      where: { active: true, archivedAt: null },
+      select: { id: true },
+    });
+    assigneeIds = team.map((u) => u.id);
+  } else if (assignMode === "colleague") {
+    if (!canAssignTasksToOthers(user.role)) {
+      throw new Error("Только администратор или руководитель могут ставить задачи коллегам");
+    }
+    const rid = str(formData, "responsibleId");
+    if (!rid) throw new Error("Выберите сотрудника");
+    assigneeIds = [rid];
+  } else {
+    // себе
+    assigneeIds = [user.id];
+  }
+
+  let firstTaskId: string | null = null;
+  for (const responsibleId of assigneeIds) {
+    const task = await prisma.task.create({
       data: {
-        userId: task.responsibleId,
-        title: "Новая задача",
-        body: task.title,
-        link: `/tasks/${task.id}`,
+        title,
+        description,
+        responsibleId,
+        creatorId: user.id,
+        partnerId,
+        deadline,
+        priority,
+        status: "NEW",
       },
     });
+    if (!firstTaskId) firstTaskId = task.id;
+    await writeAudit({
+      userId: user.id,
+      entityType: "task",
+      entityId: task.id,
+      action: "create",
+      newValue: task,
+      summary:
+        assignMode === "all"
+          ? `${user.name} поставил(а) задачу всей команде`
+          : `${user.name} создал(а) задачу`,
+    });
+    if (responsibleId !== user.id) {
+      await prisma.notification.create({
+        data: {
+          userId: responsibleId,
+          title: "Новая задача",
+          body: title,
+          link: `/tasks/${task.id}`,
+        },
+      });
+    }
   }
+
   revalidateEntity(["/tasks", "/dashboard"]);
-  redirect(`/tasks/${task.id}`);
+  redirect(firstTaskId ? `/tasks/${firstTaskId}` : "/tasks");
 }
 
 export async function updateTaskAction(id: string, formData: FormData) {
@@ -1209,4 +1231,47 @@ export async function deleteSalaryEntryAction(formData: FormData): Promise<void>
 
   revalidateEntity(["/payroll"]);
   redirect("/payroll");
+}
+
+export async function createPersonAction(formData: FormData) {
+  const user = await requireUser();
+  const name = str(formData, "name") || "";
+  if (!name) throw new Error("Имя обязательно");
+  const person = await prisma.person.create({
+    data: {
+      name,
+      phone: str(formData, "phone"),
+      city: str(formData, "city"),
+      comment: str(formData, "comment"),
+      responsibleId: str(formData, "responsibleId") || user.id,
+      createdById: user.id,
+    },
+  });
+  await writeAudit({
+    userId: user.id,
+    entityType: "person",
+    entityId: person.id,
+    action: "create",
+    summary: `${user.name} добавил(а) частника ${person.name}`,
+  });
+  revalidateEntity(["/people", "/dashboard"]);
+  redirect(`/people/${person.id}`);
+}
+
+export async function updatePersonAction(id: string, formData: FormData) {
+  const user = await requireUser();
+  const before = await prisma.person.findUniqueOrThrow({ where: { id } });
+  const after = await prisma.person.update({
+    where: { id },
+    data: {
+      name: str(formData, "name") || before.name,
+      phone: str(formData, "phone"),
+      city: str(formData, "city"),
+      comment: str(formData, "comment"),
+      responsibleId: str(formData, "responsibleId") || before.responsibleId,
+    },
+  });
+  await trackFieldChanges("person", id, user, before as never, after as never);
+  revalidateEntity([`/people/${id}`, "/people", "/dashboard"]);
+  redirect(`/people/${id}`);
 }

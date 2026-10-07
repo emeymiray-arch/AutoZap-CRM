@@ -1,13 +1,10 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { PageHeader, Card, formatDateTime } from "@/components/layout/Page";
+import { PageHeader, Card } from "@/components/layout/Page";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EntityActions } from "@/components/crm/EntityActions";
-import { ActivityFeed } from "@/components/crm/ActivityFeed";
-import { AuditPanel } from "@/components/crm/AuditPanel";
 import { PARTNER_STATUS_LABELS } from "@/lib/labels";
 import { canHardDelete } from "@/lib/permissions";
 
@@ -24,8 +21,24 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
     ? [partner.contact.firstName, partner.contact.lastName].filter(Boolean).join(" ")
     : null;
 
+  const rows: [string, string | null | undefined][] = [
+    ["Телефон", partner.company?.phone],
+    ["Город", partner.company?.city || partner.region],
+    ["Магазины", partner.company?.storeCities],
+    ["Склады", partner.company?.warehouseCities],
+    ["Производство", partner.company?.productionCities],
+    [
+      "Контакт",
+      contactLabel
+        ? `${contactLabel}${partner.contact?.phone ? ` · ${partner.contact.phone}` : ""}`
+        : null,
+    ],
+    ["Ответственный", partner.responsible?.name],
+    ["Комментарий", partner.comment],
+  ];
+
   return (
-    <div>
+    <div className="mx-auto max-w-2xl">
       <PageHeader
         title={partner.name}
         description="Партнёр"
@@ -46,54 +59,16 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
           Воронка
         </Button>
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card title="Карточка" className="lg:col-span-2">
-          <dl className="grid gap-3 sm:grid-cols-2 text-sm">
-            {[
-              ["Регион", partner.region || partner.company?.region],
-              ["Склады", partner.company?.warehouseCities],
-              ["Производство", partner.company?.productionCities],
-              ["Магазины (города)", partner.company?.storeCities],
-              ["Ответственный", partner.responsible?.name],
-              ["Следующий контакт", formatDateTime(partner.nextContactAt)],
-            ].map(([k, v]) => (
-              <div key={String(k)}>
-                <dt className="text-xs text-slate-500">{k}</dt>
-                <dd className="font-medium">{v || "—"}</dd>
-              </div>
-            ))}
-            <div className="sm:col-span-2">
-              <dt className="text-xs text-slate-500">Должностное лицо</dt>
-              <dd className="font-medium">
-                {partner.contact ? (
-                  <Link href={`/crm/contacts/${partner.contact.id}`} className="text-teal-800 hover:underline">
-                    {contactLabel}
-                    {partner.contact.position ? ` · ${partner.contact.position}` : ""}
-                    {partner.contact.phone ? ` · ${partner.contact.phone}` : ""}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </dd>
+      <Card title="Карточка">
+        <dl className="grid gap-3 sm:grid-cols-2 text-sm">
+          {rows.map(([k, v]) => (
+            <div key={k} className={k === "Комментарий" || k === "Контакт" ? "sm:col-span-2" : ""}>
+              <dt className="text-xs text-slate-500">{k}</dt>
+              <dd className="font-medium whitespace-pre-wrap">{v || "—"}</dd>
             </div>
-            <div className="sm:col-span-2">
-              <dt className="text-xs text-slate-500">Комментарий</dt>
-              <dd>{partner.comment || "—"}</dd>
-            </div>
-          </dl>
-        </Card>
-        <Card title="Активности">
-          <ActivityFeed
-            where={{ partnerId: partner.id, companyId: partner.companyId, contactId: partner.contactId }}
-            redirectTo={`/partners/${partner.id}`}
-          />
-        </Card>
-      </div>
-      <div className="mt-4">
-        <Card title="Аудит">
-          <AuditPanel entityType="partner" entityId={partner.id} />
-        </Card>
-      </div>
+          ))}
+        </dl>
+      </Card>
     </div>
   );
 }

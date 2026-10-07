@@ -38,6 +38,7 @@ model User {
   partnersResponsible  Partner[]      @relation("PartnerResponsible")
   catalogsResponsible  Catalog[]      @relation("CatalogResponsible")
   storesResponsible    Store[]        @relation("StoreResponsible")
+  peopleResponsible    Person[]       @relation("PersonResponsible")
   tasksResponsible     Task[]         @relation("TaskResponsible")
   tasksCreated         Task[]         @relation("TaskCreator")
   activities           Activity[]
@@ -293,6 +294,27 @@ model Catalog {
 
   @@index([status])
   @@index([partnerId])
+  @@index([archivedAt])
+}
+
+/// Обычные люди (частники) — отдельно от компаний-партнёров
+model Person {
+  id            String    @id @default(uuid())
+  name          String
+  phone         String?
+  city          String?
+  comment       String?
+  responsibleId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+  createdById   String?
+
+  responsible User? @relation("PersonResponsible", fields: [responsibleId], references: [id])
+
+  @@index([name])
+  @@index([phone])
+  @@index([responsibleId])
   @@index([archivedAt])
 }
 

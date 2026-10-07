@@ -12,6 +12,7 @@ type EntityKey =
   | "partner"
   | "catalog"
   | "store"
+  | "person"
   | "task";
 
 const statusField: Partial<Record<EntityKey, string>> = {
@@ -33,6 +34,7 @@ function model(entity: EntityKey): any {
     partner: prisma.partner,
     catalog: prisma.catalog,
     store: prisma.store,
+    person: prisma.person,
     task: prisma.task,
   };
   return map[entity];
