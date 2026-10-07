@@ -21,9 +21,16 @@ export default async function PeoplePage({
 
   const rows = await prisma.person.findMany({
     where: { archivedAt: null, ...scopeWhere(session.user) },
-    include: { responsible: true },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      city: true,
+      status: true,
+      responsible: { select: { name: true } },
+    },
     orderBy: { updatedAt: "desc" },
-    take: 500,
+    take: 200,
   });
 
   const funnelItems = rows.map((r) => ({

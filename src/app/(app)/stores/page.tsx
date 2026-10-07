@@ -39,9 +39,17 @@ export default async function StoresPage({
 
   const rows = await prisma.store.findMany({
     where,
-    include: { responsible: true },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      region: true,
+      contactName: true,
+      contactPhone: true,
+      responsible: { select: { name: true } },
+    },
     orderBy: { updatedAt: "desc" },
-    take: 500,
+    take: 200,
   });
 
   const funnelItems = rows.map((r) => ({

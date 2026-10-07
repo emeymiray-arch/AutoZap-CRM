@@ -41,6 +41,14 @@ function FunnelBlock({
   );
 }
 
+function countsByStatus(
+  order: readonly string[],
+  grouped: { status: string; _count: { _all: number } }[],
+) {
+  const map = new Map(grouped.map((g) => [g.status, g._count._all]));
+  return order.map((status) => ({ status, count: map.get(status) || 0 }));
+}
+
 export default async function AnalyticsPage() {
   const session = await auth();
   if (!session?.user) return null;
@@ -56,33 +64,34 @@ export default async function AnalyticsPage() {
     );
   }
 
-  const [partnerTotal, storeTotal, peopleTotal, taskOpen, partnerStages, storeStages, peopleStages] =
-    await Promise.all([
-      prisma.partner.count({ where: { archivedAt: null } }),
-      prisma.store.count({ where: { archivedAt: null } }),
-      prisma.person.count({ where: { archivedAt: null } }),
-      prisma.task.count({
-        where: { archivedAt: null, status: { in: ["NEW", "IN_PROGRESS", "REVIEW", "OVERDUE"] } },
-      }),
-      Promise.all(
-        PARTNER_FUNNEL_ORDER.map(async (s) => ({
-          status: s,
-          count: await prisma.partner.count({ where: { archivedAt: null, status: s } }),
-        })),
-      ),
-      Promise.all(
-        STORE_FUNNEL_ORDER.map(async (s) => ({
-          status: s,
-          count: await prisma.store.count({ where: { archivedAt: null, status: s } }),
-        })),
-      ),
-      Promise.all(
-        PERSON_FUNNEL_ORDER.map(async (s) => ({
-          status: s,
-          count: await prisma.person.count({ where: { archivedAt: null, status: s } }),
-        })),
-      ),
-    ]);
+  const [partnerGroups, storeGroups, peopleGroups, taskOpen] = await Promise.all([
+    prisma.partner.groupBy({
+      by: ["status"],
+      where: { archivedAt: null },
+      _count: { _all: true },
+    }),
+    prisma.store.groupBy({
+      by: ["status"],
+      where: { archivedAt: null },
+      _count: { _all: true },
+    }),
+    prisma.person.groupBy({
+      by: ["status"],
+      where: { archivedAt: null },
+      _count: { _all: true },
+    }),
+    prisma.task.count({
+      where: { archivedAt: null, status: { in: ["NEW", "IN_PROGRESS", "REVIEW", "OVERDUE"] } },
+    }),
+  ]);
+
+  const partnerStages = countsByStatus(PARTNER_FUNNEL_ORDER, partnerGroups);
+  const storeStages = countsByStatus(STORE_FUNNEL_ORDER, storeGroups);
+  const peopleStages = countsByStatus(PERSON_FUNNEL_ORDER, peopleGroups);
+
+  const partnerTotal = partnerGroups.reduce((s, g) => s + g._count._all, 0);
+  const storeTotal = storeGroups.reduce((s, g) => s + g._count._all, 0);
+  const peopleTotal = peopleGroups.reduce((s, g) => s + g._count._all, 0);
 
   const totals = [
     ["Партнёры", partnerTotal],

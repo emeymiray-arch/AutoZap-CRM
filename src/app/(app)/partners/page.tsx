@@ -7,7 +7,7 @@ import { ViewTabs } from "@/components/crm/ViewTabs";
 import { CompactEntityList } from "@/components/crm/CompactEntityList";
 import { PartnerKanban } from "@/components/kanban/PartnerKanban";
 import { PARTNER_STATUS_LABELS, partnerFunnelStage } from "@/lib/labels";
-import { parseListParams, scopeWhere, syncCompaniesIntoPartners } from "@/lib/list-query";
+import { parseListParams, scopeWhere } from "@/lib/list-query";
 import type { Prisma } from "@prisma/client";
 
 export default async function PartnersPage({
@@ -17,7 +17,6 @@ export default async function PartnersPage({
 }) {
   const session = await auth();
   if (!session?.user) return null;
-  await syncCompaniesIntoPartners();
   const raw = await searchParams;
   const sp = parseListParams(raw);
   const view = typeof raw.view === "string" && raw.view === "funnel" ? "funnel" : "list";
@@ -38,9 +37,17 @@ export default async function PartnersPage({
 
   const rows = await prisma.partner.findMany({
     where,
-    include: { company: true, contact: true, responsible: true },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      region: true,
+      company: { select: { city: true } },
+      contact: { select: { firstName: true, phone: true } },
+      responsible: { select: { name: true } },
+    },
     orderBy: { updatedAt: "desc" },
-    take: 500,
+    take: 200,
   });
 
   const funnelItems = rows.map((r) => ({

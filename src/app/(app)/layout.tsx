@@ -10,8 +10,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const notifications = await prisma.notification.findMany({
     where: { userId: session.user.id },
+    select: { id: true, title: true, body: true, link: true, readAt: true },
     orderBy: { createdAt: "desc" },
-    take: 15,
+    take: 8,
   });
 
   return (
