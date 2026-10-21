@@ -13,13 +13,14 @@ import { StaffCredentialsList } from "@/components/settings/StaffCredentialsList
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ added?: string }>;
+  searchParams: Promise<{ added?: string; error?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) return null;
   if (!canAccessSettings(session.user.role)) redirect("/dashboard");
 
   const sp = await searchParams;
+  const formError = typeof sp.error === "string" ? sp.error : null;
 
   const users = await prisma.user.findMany({
     where: { archivedAt: null },
@@ -46,6 +47,11 @@ export default async function SettingsPage({
       {sp.added && (
         <div className="mb-4 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
           Аккаунт создан. Логин и пароль сохранены в списке ниже — передайте их сотруднику.
+        </div>
+      )}
+      {formError && (
+        <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          {formError}
         </div>
       )}
 

@@ -1138,17 +1138,22 @@ export async function registerAction(): Promise<void> {
 export async function createTeamUserAction(formData: FormData): Promise<void> {
   const actor = await requireUser();
   if (!canManageUsers(actor.role)) {
-    throw new Error("Только администратор программы может создавать аккаунты");
+    redirect("/settings?error=" + encodeURIComponent("Только администратор программы может создавать аккаунты"));
   }
-  const created = await createUserFromForm(formData);
-  await writeAudit({
-    userId: actor.id,
-    entityType: "user",
-    entityId: created.id,
-    action: "create",
-    summary: `${actor.name} создал(а) аккаунт ${created.name} (${created.role})`,
-    newValue: { id: created.id, name: created.name, email: created.email, role: created.role },
-  });
+  try {
+    const created = await createUserFromForm(formData);
+    await writeAudit({
+      userId: actor.id,
+      entityType: "user",
+      entityId: created.id,
+      action: "create",
+      summary: `${actor.name} создал(а) аккаунт ${created.name} (${created.role})`,
+      newValue: { id: created.id, name: created.name, email: created.email, role: created.role },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Не удалось создать аккаунт";
+    redirect("/settings?error=" + encodeURIComponent(msg));
+  }
   revalidateEntity(["/settings"]);
   redirect("/settings?added=1");
 }
