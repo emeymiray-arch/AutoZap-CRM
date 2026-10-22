@@ -11,6 +11,10 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "AutoZap OS",
   description: "Операционная система компании AutoZap",
+  icons: {
+    icon: [{ url: "/brand/favicon.png", type: "image/png" }],
+    apple: [{ url: "/brand/favicon.png" }],
+  },
 };
 
 export const viewport = {

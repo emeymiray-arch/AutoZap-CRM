@@ -115,7 +115,7 @@ function MobileCard({
       onPointerCancel={clear}
       onContextMenu={(e) => e.preventDefault()}
       className={`touch-manipulation select-none rounded-md border border-slate-200 bg-white p-2 shadow-sm transition ${
-        pressing ? "scale-[0.98] ring-2 ring-teal-500/40" : ""
+        pressing ? "scale-[0.98] ring-2 ring-sky-500/40" : ""
       }`}
       style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}
     >
@@ -123,7 +123,7 @@ function MobileCard({
       {pressing ? (
         <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-teal-500"
+            className="h-full rounded-full bg-sky-500"
             style={{ animation: `kanban-longpress ${LONG_PRESS_MS}ms linear forwards` }}
           />
         </div>
@@ -156,7 +156,7 @@ function DragCard({
       {...listeners}
       {...attributes}
       className={`cursor-grab rounded-md border border-slate-200 bg-white p-2.5 shadow-sm active:cursor-grabbing ${
-        dragging ? "shadow-md ring-2 ring-teal-600/30" : ""
+        dragging ? "shadow-md ring-2 ring-brand/30" : ""
       }`}
     >
       <CardBody item={item} href={href} />
@@ -187,7 +187,7 @@ function Column({
     <div
       ref={mobile ? undefined : setNodeRef}
       className={`flex w-full shrink-0 flex-col rounded-lg border bg-slate-50 md:w-64 ${
-        isOver ? "border-teal-600 bg-teal-50/40" : "border-slate-200"
+        isOver ? "border-brand bg-sky-50/40" : "border-slate-200"
       }`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
@@ -250,12 +250,12 @@ function StagePicker({
                   onClick={() => onSelect(stage)}
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm ${
                     current
-                      ? "bg-teal-50 font-medium text-teal-900"
+                      ? "bg-sky-50 font-medium text-brand-deep"
                       : "text-slate-800 active:bg-slate-50"
                   }`}
                 >
                   <span>{labels[stage] || stage}</span>
-                  {current ? <span className="text-xs text-teal-700">сейчас</span> : null}
+                  {current ? <span className="text-xs text-brand-deep">сейчас</span> : null}
                 </button>
               </li>
             );

@@ -7,7 +7,7 @@ async function kpi(href: string, label: string, value: number) {
   return (
     <Link
       href={href}
-      className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md"
+      className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
     >
       <div className="text-2xl font-semibold tabular-nums text-slate-900">{value}</div>
       <div className="mt-1 text-xs text-slate-500">{label}</div>
@@ -51,16 +51,16 @@ export default async function DashboardPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         <Card title="Быстрые действия">
           <div className="flex flex-col gap-2 text-sm">
-            <Link href="/partners/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-teal-50">
+            <Link href="/partners/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-sky-50">
               + Партнёр
             </Link>
-            <Link href="/stores/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-teal-50">
+            <Link href="/stores/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-sky-50">
               + Магазин
             </Link>
-            <Link href="/people/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-teal-50">
+            <Link href="/people/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-sky-50">
               + Частник
             </Link>
-            <Link href="/tasks/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-teal-50">
+            <Link href="/tasks/new" className="rounded-lg bg-slate-50 px-3 py-2 hover:bg-sky-50">
               + Задача
             </Link>
           </div>

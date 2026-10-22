@@ -16,7 +16,7 @@ export function ChipList({ items }: { items: string[] }) {
       {items.map((item) => (
         <span
           key={item}
-          className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-900"
+          className="rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-brand-deep"
         >
           {item}
         </span>
@@ -39,7 +39,7 @@ export function EntityCard({
   return (
     <Link
       href={href}
-      className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md"
+      className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <h3 className="text-base font-semibold leading-snug text-slate-900">{title}</h3>

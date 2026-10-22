@@ -8,7 +8,8 @@ type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  primary: "bg-slate-900 text-white hover:bg-slate-800",
+  primary:
+    "bg-brand text-white shadow-sm hover:bg-brand-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
   secondary: "bg-white text-slate-800 border border-slate-300 hover:bg-slate-50",
   danger: "bg-rose-600 text-white hover:bg-rose-700",
   ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
@@ -26,7 +27,7 @@ export function Button({
     "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition disabled:opacity-50",
     size === "sm" ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2 text-sm",
     variants[variant],
-    className
+    className,
   );
   if (href) {
     return (

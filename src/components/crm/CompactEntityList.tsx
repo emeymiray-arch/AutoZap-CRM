@@ -38,7 +38,7 @@ export function CompactEntityList({ rows }: { rows: CompactEntityRow[] }) {
                     {row.trailing}
                   </span>
                 ) : null}
-                <span className="text-[11px] font-medium text-teal-700">изменить</span>
+                <span className="text-[11px] font-medium text-brand-deep">изменить</span>
               </span>
             </Link>
           </li>

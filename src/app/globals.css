@@ -1,15 +1,26 @@
 @import "tailwindcss";
 
+/* Бренд AutoZap — как в Академии: cyan → blue */
 :root {
-  --background: #f1f5f9;
-  --foreground: #0f172a;
-  --az-accent: #0f766e;
+  --background: #f4f7fb;
+  --foreground: #0a0a0a;
+  --az-cyan: #0284c7;
+  --az-blue: #0360fd;
+  --az-sky: #38bdf8;
+  --az-accent: #0284c7;
+  --az-accent-deep: #0369a1;
+  --az-brand-grad: linear-gradient(135deg, #38bdf8 0%, #0284c7 40%, #0360fd 100%);
   --az-sidebar: #020617;
+  --az-paper: #f4f7fb;
+  --az-line: rgba(15, 23, 42, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: #0284c7;
+  --color-brand-deep: #0360fd;
+  --color-brand-sky: #38bdf8;
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -20,12 +31,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Удобнее нажимать на мобильных */
+.az-brand-grad {
+  background: var(--az-brand-grad);
+}
+
+.az-brand-text {
+  background: var(--az-brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 @media (max-width: 767px) {
   input,
   select,
   textarea,
   button {
-    font-size: 16px; /* без автозума iOS */
+    font-size: 16px;
   }
 }

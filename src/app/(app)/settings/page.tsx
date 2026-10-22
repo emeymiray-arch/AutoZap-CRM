@@ -45,7 +45,7 @@ export default async function SettingsPage({
       <PageHeader title="Настройки" description="Аккаунты и пароли сотрудников — только для вас" />
 
       {sp.added && (
-        <div className="mb-4 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="mb-4 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-brand-deep">
           Аккаунт создан. Логин и пароль сохранены в списке ниже — передайте их сотруднику.
         </div>
       )}

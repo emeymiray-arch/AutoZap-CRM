@@ -29,7 +29,7 @@ function FunnelBlock({
             <span className="w-[7.5rem] shrink-0 truncate text-slate-600">{labels[s.status] || s.status}</span>
             <div className="min-w-0 flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
               <div
-                className="h-full rounded-full bg-teal-500/80"
+                className="h-full rounded-full bg-sky-500/80"
                 style={{ width: `${(s.count / max) * 100}%` }}
               />
             </div>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bell, Plus, Search, LogOut, Menu } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { markNotificationsReadAction } from "@/lib/actions";
 import { signOut } from "next-auth/react";
@@ -46,6 +47,13 @@ export function Topbar({
       >
         <Menu className="h-5 w-5" />
       </button>
+      <Image
+        src="/brand/autozap-mark.png"
+        alt=""
+        width={28}
+        height={28}
+        className="hidden shrink-0 rounded-full sm:block md:hidden"
+      />
 
       <form onSubmit={onSearch} className="relative min-w-0 flex-1 max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

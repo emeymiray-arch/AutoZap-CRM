@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/permissions";
 import { canAccessSettings, canSeeAnalytics, canViewAll } from "@/lib/permissions";
+import { AutoZapLogo } from "@/components/brand/AutoZapLogo";
 
 const items: {
   href: string;
@@ -52,11 +53,8 @@ export function Sidebar({
         mobile && "w-full shadow-2xl",
       )}
     >
-      <div className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
-        <div>
-          <div className="text-lg font-semibold tracking-tight">AutoZap OS</div>
-          <div className="text-[11px] text-slate-400">Операционная система</div>
-        </div>
+      <div className="flex items-center justify-between border-b border-slate-800 px-3 py-3.5">
+        <AutoZapLogo size={40} withWordmark />
         {mobile && (
           <button
             type="button"
@@ -79,7 +77,9 @@ export function Sidebar({
               onClick={onNavigate}
               className={cn(
                 "flex min-h-11 items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition md:min-h-0 md:py-2",
-                active ? "bg-slate-800 text-white" : "text-slate-300 hover:bg-slate-900 hover:text-white",
+                active
+                  ? "bg-brand/20 text-white ring-1 ring-inset ring-brand/40"
+                  : "text-slate-300 hover:bg-slate-900 hover:text-white",
               )}
             >
               <Icon className="h-4 w-4 shrink-0 opacity-80" />

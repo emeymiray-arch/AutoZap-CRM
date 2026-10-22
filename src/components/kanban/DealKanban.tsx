@@ -51,7 +51,7 @@ function DealCard({
       {...listeners}
       {...attributes}
       className={`cursor-grab rounded-md border border-slate-200 bg-white p-2.5 shadow-sm active:cursor-grabbing ${
-        dragging ? "shadow-md ring-2 ring-teal-600/30" : ""
+        dragging ? "shadow-md ring-2 ring-brand/30" : ""
       }`}
     >
       <Link
@@ -89,7 +89,7 @@ function StageColumn({
     <div
       ref={setNodeRef}
       className={`flex w-64 shrink-0 flex-col rounded-lg border bg-slate-50 ${
-        isOver ? "border-teal-600 bg-teal-50/40" : "border-slate-200"
+        isOver ? "border-brand bg-sky-50/40" : "border-slate-200"
       }`}
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">

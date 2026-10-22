@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Form";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -81,10 +82,20 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-950 px-3 py-6 sm:px-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-800 bg-white p-5 shadow-2xl sm:p-8">
-        <div className="mb-6 text-center">
-          <div className="text-2xl font-semibold tracking-tight">AutoZap OS</div>
+    <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden px-3 py-6 sm:px-4">
+      <div className="absolute inset-0 az-brand-grad opacity-90" />
+      <div className="absolute inset-0 bg-slate-950/55" />
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white p-5 shadow-2xl sm:p-8">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Image
+            src="/brand/autozap-mark.png"
+            alt="AutoZap"
+            width={72}
+            height={72}
+            className="mb-3 rounded-full shadow-md"
+            priority
+          />
+          <div className="text-2xl font-semibold tracking-tight text-slate-900">AutoZap OS</div>
           <p className="mt-1 text-sm text-slate-500">Вход в операционную систему</p>
         </div>
         <Suspense>
