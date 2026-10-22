@@ -32,11 +32,14 @@ export function CompactEntityList({ rows }: { rows: CompactEntityRow[] }) {
                 </div>
                 {row.meta ? <p className="truncate text-xs text-slate-500">{row.meta}</p> : null}
               </div>
-              {row.trailing ? (
-                <span className="max-w-[38%] shrink-0 truncate text-right text-[11px] text-slate-400">
-                  {row.trailing}
-                </span>
-              ) : null}
+              <span className="flex shrink-0 items-center gap-2">
+                {row.trailing ? (
+                  <span className="max-w-[7rem] truncate text-right text-[11px] text-slate-400 sm:max-w-[10rem]">
+                    {row.trailing}
+                  </span>
+                ) : null}
+                <span className="text-[11px] font-medium text-teal-700">изменить</span>
+              </span>
             </Link>
           </li>
         ))}

@@ -4,9 +4,14 @@ import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Input, Select, Textarea } from "@/components/ui/Form";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { EntityActions } from "@/components/crm/EntityActions";
-import { PARTNER_STATUS_LABELS } from "@/lib/labels";
+import { PARTNER_FUNNEL_ORDER, PARTNER_STATUS_LABELS } from "@/lib/labels";
 import { canHardDelete } from "@/lib/permissions";
+import { updatePartnerAction } from "@/lib/actions";
+import { usersForSelect } from "@/lib/list-query";
 
 export default async function PartnerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -17,27 +22,18 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
     include: { company: true, contact: true, responsible: true },
   });
   if (!partner) notFound();
-  const contactLabel = partner.contact
-    ? [partner.contact.firstName, partner.contact.lastName].filter(Boolean).join(" ")
-    : null;
-
-  const rows: [string, string | null | undefined][] = [
-    ["Город", partner.company?.city || partner.region],
-    [
-      "Контакт",
-      contactLabel
-        ? `${contactLabel}${partner.contact?.phone ? ` · ${partner.contact.phone}` : ""}`
-        : null,
-    ],
-    ["Ответственный", partner.responsible?.name],
-    ["Комментарий", partner.comment],
-  ];
+  const users = await usersForSelect();
+  const action = updatePartnerAction.bind(null, id);
+  const c = partner.contact;
+  const statusOptions = PARTNER_FUNNEL_ORDER.includes(partner.status as never)
+    ? [...PARTNER_FUNNEL_ORDER]
+    : [partner.status, ...PARTNER_FUNNEL_ORDER];
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-lg">
       <PageHeader
         title={partner.name}
-        description="Партнёр"
+        description="Партнёр — можно менять любые поля"
         actions={
           <EntityActions
             entity="partner"
@@ -46,6 +42,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
             canDelete={canHardDelete(session.user.role)}
             editHref={`/partners/${partner.id}/edit`}
             restoreTo={`/partners/${partner.id}`}
+            hideEdit
           />
         }
       />
@@ -55,15 +52,41 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
           Воронка
         </Button>
       </div>
-      <Card title="Карточка">
-        <dl className="grid gap-3 sm:grid-cols-2 text-sm">
-          {rows.map(([k, v]) => (
-            <div key={k} className={k === "Комментарий" || k === "Контакт" ? "sm:col-span-2" : ""}>
-              <dt className="text-xs text-slate-500">{k}</dt>
-              <dd className="font-medium whitespace-pre-wrap">{v || "—"}</dd>
+      <Card title="Редактирование">
+        <form action={action} className="grid gap-3">
+          {partner.contactId ? <input type="hidden" name="contactId" value={partner.contactId} /> : null}
+          <Input name="name" label="Название компании" required defaultValue={partner.name} />
+          <RegionSelect
+            name="city"
+            label="Регион"
+            defaultValue={partner.company?.city || partner.region || ""}
+          />
+
+          <div className="rounded-xl bg-slate-50 p-3">
+            <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input name="contactFirstName" label="Имя" defaultValue={c?.firstName || ""} />
+              <Input name="contactPhone" label="Телефон" type="tel" defaultValue={c?.phone || ""} />
             </div>
-          ))}
-        </dl>
+          </div>
+
+          <Select name="status" label="Этап" defaultValue={partner.status}>
+            {statusOptions.map((k) => (
+              <option key={k} value={k}>
+                {PARTNER_STATUS_LABELS[k] || k}
+              </option>
+            ))}
+          </Select>
+          <Select name="responsibleId" label="Ответственный" defaultValue={partner.responsibleId || ""}>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </Select>
+          <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} rows={2} />
+          <FormSubmitButton>Сохранить изменения</FormSubmitButton>
+        </form>
       </Card>
     </div>
   );

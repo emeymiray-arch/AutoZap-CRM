@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { createStoreAction } from "@/lib/actions";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { STORE_FUNNEL_ORDER, STORE_STATUS_LABELS } from "@/lib/labels";
@@ -14,7 +15,7 @@ export default async function NewStorePage() {
       <Card>
         <form action={createStoreAction} className="grid gap-3">
           <Input name="name" label="Название" required />
-          <Input name="region" label="Город" placeholder="Москва" />
+          <RegionSelect name="region" label="Регион" />
           <div className="rounded-xl bg-slate-50 p-3">
             <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -31,7 +32,7 @@ export default async function NewStorePage() {
           </Select>
           <ResponsibleSelect />
           <Textarea name="comment" label="Комментарий" rows={2} />
-          <Button type="submit">Создать</Button>
+          <FormSubmitButton pendingLabel="Создание…">Создать</FormSubmitButton>
         </form>
       </Card>
     </div>

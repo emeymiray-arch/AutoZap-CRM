@@ -4,9 +4,14 @@ import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Input, Select, Textarea } from "@/components/ui/Form";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { EntityActions } from "@/components/crm/EntityActions";
-import { PERSON_STATUS_LABELS } from "@/lib/labels";
+import { PERSON_FUNNEL_ORDER, PERSON_STATUS_LABELS } from "@/lib/labels";
 import { canHardDelete } from "@/lib/permissions";
+import { updatePersonAction } from "@/lib/actions";
+import { usersForSelect } from "@/lib/list-query";
 
 export default async function PersonDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -17,19 +22,17 @@ export default async function PersonDetailPage({ params }: { params: Promise<{ i
     include: { responsible: true },
   });
   if (!person) notFound();
-
-  const rows: [string, string | null | undefined][] = [
-    ["Телефон", person.phone],
-    ["Город", person.city],
-    ["Ответственный", person.responsible?.name],
-    ["Комментарий", person.comment],
-  ];
+  const users = await usersForSelect();
+  const action = updatePersonAction.bind(null, id);
+  const statusOptions = PERSON_FUNNEL_ORDER.includes(person.status as never)
+    ? PERSON_FUNNEL_ORDER
+    : ([person.status, ...PERSON_FUNNEL_ORDER] as string[]);
 
   return (
     <div className="mx-auto max-w-lg">
       <PageHeader
         title={person.name}
-        description="Частник"
+        description="Частник — можно менять любые поля"
         actions={
           <EntityActions
             entity="person"
@@ -38,6 +41,7 @@ export default async function PersonDetailPage({ params }: { params: Promise<{ i
             canDelete={canHardDelete(session.user.role)}
             editHref={`/people/${person.id}/edit`}
             restoreTo={`/people/${person.id}`}
+            hideEdit
           />
         }
       />
@@ -47,15 +51,28 @@ export default async function PersonDetailPage({ params }: { params: Promise<{ i
           Воронка
         </Button>
       </div>
-      <Card title="Карточка">
-        <dl className="grid gap-3 text-sm">
-          {rows.map(([k, v]) => (
-            <div key={k}>
-              <dt className="text-xs text-slate-500">{k}</dt>
-              <dd className="font-medium whitespace-pre-wrap">{v || "—"}</dd>
-            </div>
-          ))}
-        </dl>
+      <Card title="Редактирование">
+        <form action={action} className="grid gap-3">
+          <Input name="name" label="Имя" required defaultValue={person.name} />
+          <Input name="phone" label="Телефон" type="tel" defaultValue={person.phone || ""} />
+          <RegionSelect name="city" label="Регион" defaultValue={person.city || ""} />
+          <Select name="status" label="Этап" defaultValue={person.status}>
+            {statusOptions.map((k) => (
+              <option key={k} value={k}>
+                {PERSON_STATUS_LABELS[k] || k}
+              </option>
+            ))}
+          </Select>
+          <Select name="responsibleId" label="Ответственный" defaultValue={person.responsibleId || ""}>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </Select>
+          <Textarea name="comment" label="Комментарий" rows={2} defaultValue={person.comment || ""} />
+          <FormSubmitButton>Сохранить изменения</FormSubmitButton>
+        </form>
       </Card>
     </div>
   );

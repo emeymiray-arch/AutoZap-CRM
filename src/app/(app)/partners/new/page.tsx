@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { createPartnerAction } from "@/lib/actions";
 import { ResponsibleSelect } from "@/components/crm/ResponsibleSelect";
 import { PARTNER_FUNNEL_ORDER, PARTNER_STATUS_LABELS } from "@/lib/labels";
@@ -14,7 +15,7 @@ export default async function NewPartnerPage() {
       <Card>
         <form action={createPartnerAction} className="grid gap-3">
           <Input name="name" label="Название" required placeholder="ООО «Пример»" />
-          <Input name="city" label="Город" placeholder="Москва" />
+          <RegionSelect name="city" label="Регион" />
 
           <div className="rounded-xl bg-slate-50 p-3">
             <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
@@ -33,7 +34,7 @@ export default async function NewPartnerPage() {
           </Select>
           <ResponsibleSelect />
           <Textarea name="comment" label="Комментарий" placeholder="Заметки, если нужно" rows={2} />
-          <Button type="submit">Создать</Button>
+          <FormSubmitButton pendingLabel="Создание…">Создать</FormSubmitButton>
         </form>
       </Card>
     </div>

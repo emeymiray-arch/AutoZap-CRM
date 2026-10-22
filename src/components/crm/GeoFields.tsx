@@ -1,8 +1,9 @@
 import { Select } from "@/components/ui/Form";
-import { CITIES, REGIONS, withCurrentOption } from "@/lib/geo";
+import { REGIONS, withCurrentOption } from "@/lib/geo";
 
 export { MultiCityField } from "@/components/crm/MultiCityField";
 
+/** Единый список регионов РФ — везде один и тот же */
 export function RegionSelect({
   name = "region",
   label = "Регион",
@@ -35,9 +36,10 @@ export function RegionSelect({
   );
 }
 
+/** То же, что RegionSelect (единый список). name по умолчанию city. */
 export function CitySelect({
   name = "city",
-  label = "Город",
+  label = "Регион",
   defaultValue = "",
   required = false,
   className,
@@ -48,21 +50,13 @@ export function CitySelect({
   required?: boolean;
   className?: string;
 }) {
-  const options = withCurrentOption(CITIES, defaultValue);
   return (
-    <Select
+    <RegionSelect
       name={name}
       label={label}
+      defaultValue={defaultValue}
       required={required}
-      defaultValue={defaultValue || ""}
       className={className}
-    >
-      <option value="">—</option>
-      {options.map((c) => (
-        <option key={c} value={c}>
-          {c}
-        </option>
-      ))}
-    </Select>
+    />
   );
 }

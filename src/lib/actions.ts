@@ -39,6 +39,43 @@ function revalidateEntity(paths: string[]) {
   for (const p of paths) revalidatePath(p);
 }
 
+/** Защита от двойного «Сохранить»: тот же автор + то же имя за последние секунды */
+const CREATE_DEDUP_MS = 8_000;
+
+async function findRecentCreateByName(
+  entity: "partner" | "store" | "person" | "task",
+  userId: string,
+  name: string,
+) {
+  const since = new Date(Date.now() - CREATE_DEDUP_MS);
+  if (entity === "partner") {
+    return prisma.partner.findFirst({
+      where: { createdById: userId, name, createdAt: { gte: since }, archivedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+  }
+  if (entity === "store") {
+    return prisma.store.findFirst({
+      where: { createdById: userId, name, createdAt: { gte: since }, archivedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+  }
+  if (entity === "person") {
+    return prisma.person.findFirst({
+      where: { createdById: userId, name, createdAt: { gte: since }, archivedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+  }
+  return prisma.task.findFirst({
+    where: { creatorId: userId, title: name, createdAt: { gte: since }, archivedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+}
+
 /** Находит компанию по имени или создаёт новую. */
 async function resolveCompanyId(
   formData: FormData,
@@ -141,10 +178,10 @@ async function ensureCompanyMirror(
         ...(formData.has("warehouseCities") ? { warehouseCities: locationData.warehouseCities } : {}),
         ...(formData.has("productionCities") ? { productionCities: locationData.productionCities } : {}),
         ...(formData.has("storeCities") ? { storeCities: locationData.storeCities } : {}),
-        ...(formData.has("phone") && locationData.phone ? { phone: locationData.phone } : {}),
-        ...(formData.has("email") && locationData.email ? { email: locationData.email } : {}),
-        ...(formData.has("city") && locationData.city ? { city: locationData.city } : {}),
-        ...(formData.has("website") && locationData.website ? { website: locationData.website } : {}),
+        ...(formData.has("phone") ? { phone: locationData.phone } : {}),
+        ...(formData.has("email") ? { email: locationData.email } : {}),
+        ...(formData.has("city") ? { city: locationData.city } : {}),
+        ...(formData.has("website") ? { website: locationData.website } : {}),
       },
     });
   }
@@ -673,6 +710,8 @@ export async function createPartnerAction(formData: FormData) {
   const user = await requireUser();
   const partnerName = str(formData, "name") || "";
   if (!partnerName) throw new Error("Название обязательно");
+  const recent = await findRecentCreateByName("partner", user.id, partnerName);
+  if (recent) redirect(`/partners/${recent.id}`);
   const companyId = await ensureCompanyMirror(formData, user, partnerName);
   const contactId = await resolvePartnerContactId(formData, user, companyId);
   // Контакт необязателен, но если указали имя/телефон — создаётся автоматически
@@ -823,6 +862,8 @@ export async function createStoreAction(formData: FormData) {
     createdById: user.id,
   };
   if (!data.name) throw new Error("Название обязательно");
+  const recent = await findRecentCreateByName("store", user.id, data.name);
+  if (recent) redirect(`/stores/${recent.id}`);
   const store = await prisma.store.create({ data });
   await writeAudit({
     userId: user.id,
@@ -900,6 +941,8 @@ export async function createTaskAction(formData: FormData) {
   const user = await requireUser();
   const title = str(formData, "title") || "";
   if (!title) throw new Error("Название обязательно");
+  const recentTask = await findRecentCreateByName("task", user.id, title);
+  if (recentTask) redirect(`/tasks/${recentTask.id}`);
 
   const assignMode = str(formData, "assignMode") || "self";
   const description = str(formData, "description");
@@ -1251,6 +1294,8 @@ export async function createPersonAction(formData: FormData) {
   const user = await requireUser();
   const name = str(formData, "name") || "";
   if (!name) throw new Error("Имя обязательно");
+  const recent = await findRecentCreateByName("person", user.id, name);
+  if (recent) redirect(`/people/${recent.id}`);
   const person = await prisma.person.create({
     data: {
       name,

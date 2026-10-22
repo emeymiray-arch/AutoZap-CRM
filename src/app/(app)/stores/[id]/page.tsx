@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card, formatDateTime } from "@/components/layout/Page";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
 import { Input, Select, Textarea } from "@/components/ui/Form";
 import { EntityActions } from "@/components/crm/EntityActions";
 import { ActivityFeed } from "@/components/crm/ActivityFeed";
@@ -33,7 +33,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
     <div>
       <PageHeader
         title={store.name}
-        description="Мелкий магазин"
+        description="Магазин — можно менять любые поля"
         actions={
           <EntityActions
             entity="store"
@@ -42,6 +42,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
             canDelete={canHardDelete(session.user.role)}
             editHref={`/stores/${id}/edit`}
             restoreTo={`/stores/${id}`}
+            hideEdit
           />
         }
       />
@@ -50,7 +51,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
         <Card title="Карточка" className="lg:col-span-2">
           <form action={action} className="grid gap-3 md:grid-cols-2">
             <Input name="name" label="Название" required defaultValue={store.name} className="md:col-span-2" />
-            <RegionSelect defaultValue={store.region} />
+            <RegionSelect name="region" label="Регион" defaultValue={store.region} />
             <Select name="status" label="Этап" defaultValue={store.status}>
               {statusOptions.map((k) => (
                 <option key={k} value={k}>
@@ -72,9 +73,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
               Создан: {formatDateTime(store.createdAt)}
             </div>
             <div className="md:col-span-2">
-              <Button type="submit" size="sm">
-                Сохранить
-              </Button>
+              <FormSubmitButton size="sm">Сохранить</FormSubmitButton>
             </div>
           </form>
         </Card>

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
 import { createTaskAction } from "@/lib/actions";
 import { partnersForSelect, usersForSelect } from "@/lib/list-query";
 import { canAssignTasksToOthers } from "@/lib/permissions";
@@ -52,7 +52,7 @@ export default async function NewTaskPage() {
             ))}
           </Select>
 
-          <Button type="submit">Поставить задачу</Button>
+          <FormSubmitButton pendingLabel="Создание…">Поставить задачу</FormSubmitButton>
         </form>
       </Card>
     </div>

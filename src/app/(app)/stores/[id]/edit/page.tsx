@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { updateStoreAction } from "@/lib/actions";
 import { usersForSelect } from "@/lib/list-query";
 import { STORE_FUNNEL_ORDER, STORE_STATUS_LABELS } from "@/lib/labels";
@@ -25,7 +26,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
       <Card>
         <form action={action} className="grid gap-3">
           <Input name="name" label="Название" required defaultValue={store.name} />
-          <Input name="region" label="Город" defaultValue={store.region || ""} />
+          <RegionSelect name="region" label="Регион" defaultValue={store.region || ""} />
           <div className="rounded-xl bg-slate-50 p-3">
             <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -48,7 +49,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
             ))}
           </Select>
           <Textarea name="comment" label="Комментарий" defaultValue={store.comment || ""} rows={2} />
-          <Button type="submit">Сохранить</Button>
+          <FormSubmitButton>Сохранить</FormSubmitButton>
         </form>
       </Card>
     </div>

@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { updatePartnerAction } from "@/lib/actions";
 import { usersForSelect } from "@/lib/list-query";
 import { PARTNER_FUNNEL_ORDER, PARTNER_STATUS_LABELS } from "@/lib/labels";
@@ -30,7 +31,11 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
         <form action={action} className="grid gap-3">
           {partner.contactId ? <input type="hidden" name="contactId" value={partner.contactId} /> : null}
           <Input name="name" label="Название" required defaultValue={partner.name} />
-          <Input name="city" label="Город" defaultValue={partner.company?.city || partner.region || ""} />
+          <RegionSelect
+            name="city"
+            label="Регион"
+            defaultValue={partner.company?.city || partner.region || ""}
+          />
 
           <div className="rounded-xl bg-slate-50 p-3">
             <div className="mb-2 text-sm font-medium text-slate-800">Контакт</div>
@@ -55,7 +60,7 @@ export default async function EditPartnerPage({ params }: { params: Promise<{ id
             ))}
           </Select>
           <Textarea name="comment" label="Комментарий" defaultValue={partner.comment || ""} rows={2} />
-          <Button type="submit">Сохранить</Button>
+          <FormSubmitButton>Сохранить</FormSubmitButton>
         </form>
       </Card>
     </div>

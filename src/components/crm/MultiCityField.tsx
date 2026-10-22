@@ -1,4 +1,4 @@
-import { CITIES, parseCityList, withCurrentOptions } from "@/lib/geo";
+import { REGIONS, parseCityList, withCurrentOptions } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 
 /** Несколько городов из списка (склады / производство / магазины). */
@@ -14,7 +14,7 @@ export function MultiCityField({
   className?: string;
 }) {
   const selected = new Set(parseCityList(defaultValue));
-  const options = withCurrentOptions(CITIES, [...selected]);
+  const options = withCurrentOptions(REGIONS, [...selected]);
 
   return (
     <fieldset className={cn("md:col-span-2 space-y-1.5", className)}>

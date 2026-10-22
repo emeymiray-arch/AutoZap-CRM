@@ -7,7 +7,7 @@ import { canAccessSettings, SELECTABLE_ROLES } from "@/lib/permissions";
 import { createTeamUserAction } from "@/lib/actions";
 import { Input, Select } from "@/components/ui/Form";
 import { PasswordInput } from "@/components/ui/PasswordInput";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
 import { StaffCredentialsList } from "@/components/settings/StaffCredentialsList";
 
 export default async function SettingsPage({
@@ -74,9 +74,9 @@ export default async function SettingsPage({
                 </option>
               ))}
             </Select>
-            <Button type="submit" size="sm">
+            <FormSubmitButton size="sm" pendingLabel="Создание…">
               Создать аккаунт
-            </Button>
+            </FormSubmitButton>
           </form>
         </Card>
 

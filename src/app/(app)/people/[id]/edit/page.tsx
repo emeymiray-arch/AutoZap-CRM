@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/layout/Page";
 import { Input, Select, Textarea } from "@/components/ui/Form";
-import { Button } from "@/components/ui/Button";
+import { FormSubmitButton } from "@/components/ui/FormSubmitButton";
+import { RegionSelect } from "@/components/crm/GeoFields";
 import { updatePersonAction } from "@/lib/actions";
 import { usersForSelect } from "@/lib/list-query";
 import { PERSON_FUNNEL_ORDER, PERSON_STATUS_LABELS } from "@/lib/labels";
@@ -26,7 +27,7 @@ export default async function EditPersonPage({ params }: { params: Promise<{ id:
         <form action={action} className="grid gap-3">
           <Input name="name" label="Имя" required defaultValue={person.name} />
           <Input name="phone" label="Телефон" type="tel" defaultValue={person.phone || ""} />
-          <Input name="city" label="Город" defaultValue={person.city || ""} />
+          <RegionSelect name="city" label="Регион" defaultValue={person.city || ""} />
           <Select name="status" label="Этап" defaultValue={person.status}>
             {statusOptions.map((k) => (
               <option key={k} value={k}>
@@ -42,7 +43,7 @@ export default async function EditPersonPage({ params }: { params: Promise<{ id:
             ))}
           </Select>
           <Textarea name="comment" label="Комментарий" rows={2} defaultValue={person.comment || ""} />
-          <Button type="submit">Сохранить</Button>
+          <FormSubmitButton>Сохранить</FormSubmitButton>
         </form>
       </Card>
     </div>

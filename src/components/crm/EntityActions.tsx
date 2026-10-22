@@ -12,6 +12,7 @@ export function EntityActions({
   canDelete,
   editHref,
   restoreTo,
+  hideEdit,
 }: {
   entity: string;
   id: string;
@@ -19,6 +20,8 @@ export function EntityActions({
   canDelete?: boolean;
   editHref: string;
   restoreTo: string;
+  /** Карточка уже с формой редактирования */
+  hideEdit?: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -27,9 +30,11 @@ export function EntityActions({
     <div className="flex flex-wrap gap-2">
       {!archived && (
         <>
-          <Button href={editHref} variant="secondary" size="sm">
-            Изменить
-          </Button>
+          {!hideEdit ? (
+            <Button href={editHref} variant="secondary" size="sm">
+              Изменить
+            </Button>
+          ) : null}
           <Button
             variant="secondary"
             size="sm"
