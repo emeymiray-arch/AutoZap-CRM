@@ -42,6 +42,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
             canDelete={canHardDelete(session.user.role)}
             editHref={`/partners/${partner.id}/edit`}
             restoreTo={`/partners/${partner.id}`}
+            listHref="/partners"
             hideEdit
           />
         }

@@ -42,6 +42,7 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
             canDelete={canHardDelete(session.user.role)}
             editHref={`/stores/${id}/edit`}
             restoreTo={`/stores/${id}`}
+            listHref="/stores"
             hideEdit
           />
         }

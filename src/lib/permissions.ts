@@ -29,8 +29,14 @@ export function canViewAll(role: Role): boolean {
   return role === "ADMIN" || role === "MANAGER_LEAD" || role === "OS_MANAGER";
 }
 
+/** Удаление записей CRM — любой сотрудник с доступом в систему */
 export function canHardDelete(role: Role): boolean {
-  return role === "ADMIN";
+  return (
+    role === "ADMIN" ||
+    role === "MANAGER_LEAD" ||
+    role === "MANAGER" ||
+    role === "OS_MANAGER"
+  );
 }
 
 /** Только администратор программы создаёт аккаунты */

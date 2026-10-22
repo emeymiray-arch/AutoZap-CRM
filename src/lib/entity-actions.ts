@@ -109,7 +109,6 @@ export async function hardDeleteEntity(entity: EntityKey, id: string, user: Sess
   const existing = await m.findUnique({ where: { id } });
   if (!existing) throw new Error("Не найдено");
   assertCanAccessRecord(user, existing);
-  if (!existing.archivedAt) throw new Error("Сначала архивируйте объект");
 
   await writeAudit({
     userId: user.id,
@@ -117,7 +116,7 @@ export async function hardDeleteEntity(entity: EntityKey, id: string, user: Sess
     entityId: id,
     action: "hard_delete",
     oldValue: existing,
-    summary: `Администратор окончательно удалил ${entity} ${id}`,
+    summary: `${user.name} удалил(а) ${entity}`,
   });
 
   await m.delete({ where: { id } });

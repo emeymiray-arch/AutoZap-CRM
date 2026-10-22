@@ -46,6 +46,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             canDelete={canHardDelete(session.user.role)}
             editHref={`/tasks/${id}/edit`}
             restoreTo={`/tasks/${id}`}
+            listHref="/tasks"
           />
         }
       />

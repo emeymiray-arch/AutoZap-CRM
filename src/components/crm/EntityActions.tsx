@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { archiveAction, restoreAction, hardDeleteAction } from "@/lib/actions";
@@ -13,6 +12,7 @@ export function EntityActions({
   editHref,
   restoreTo,
   hideEdit,
+  listHref,
 }: {
   entity: string;
   id: string;
@@ -22,9 +22,11 @@ export function EntityActions({
   restoreTo: string;
   /** Карточка уже с формой редактирования */
   hideEdit?: boolean;
+  /** Куда вернуться после удаления */
+  listHref?: string;
 }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
+  const afterDelete = listHref || restoreTo.replace(/\/[^/]+$/, "") || "/dashboard";
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -40,13 +42,31 @@ export function EntityActions({
             size="sm"
             disabled={pending}
             onClick={() => {
-              if (confirm("Архивировать объект? Данные сохранятся.")) {
+              if (confirm("Убрать в архив? Можно будет восстановить.")) {
                 start(() => archiveAction(entity, id, restoreTo));
               }
             }}
           >
-            Архивировать
+            В архив
           </Button>
+          {canDelete ? (
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={pending}
+              onClick={() => {
+                if (
+                  confirm(
+                    "Удалить эту запись навсегда? Восстановить будет нельзя.",
+                  )
+                ) {
+                  start(() => hardDeleteAction(entity, id, afterDelete));
+                }
+              }}
+            >
+              Удалить
+            </Button>
+          ) : null}
         </>
       )}
       {archived && (
@@ -58,27 +78,20 @@ export function EntityActions({
           >
             Восстановить
           </Button>
-          {canDelete && (
+          {canDelete ? (
             <Button
               variant="danger"
               size="sm"
               disabled={pending}
               onClick={() => {
-                if (
-                  confirm(
-                    "Вы действительно хотите удалить объект? Это действие может быть необратимым."
-                  )
-                ) {
-                  start(async () => {
-                    await hardDeleteAction(entity, id);
-                    router.refresh();
-                  });
+                if (confirm("Удалить навсегда без возможности восстановления?")) {
+                  start(() => hardDeleteAction(entity, id, afterDelete));
                 }
               }}
             >
               Удалить навсегда
             </Button>
-          )}
+          ) : null}
         </>
       )}
     </div>

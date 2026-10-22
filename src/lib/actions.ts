@@ -1101,11 +1101,27 @@ export async function restoreAction(entity: string, id: string, redirectTo: stri
   redirect(redirectTo);
 }
 
-export async function hardDeleteAction(entity: string, id: string) {
+function listPathForEntity(entity: string): string {
+  const map: Record<string, string> = {
+    partner: "/partners",
+    store: "/stores",
+    person: "/people",
+    task: "/tasks",
+    lead: "/partners",
+    deal: "/partners",
+    contact: "/partners",
+    company: "/partners",
+    catalog: "/partners",
+  };
+  return map[entity] || "/dashboard";
+}
+
+export async function hardDeleteAction(entity: string, id: string, redirectTo?: string) {
   const user = await requireUser();
   await hardDeleteEntity(entity as never, id, user);
-  revalidateEntity(["/archive"]);
-  redirect("/archive");
+  const to = redirectTo || listPathForEntity(entity);
+  revalidateEntity([to, "/archive", "/dashboard", "/partners", "/stores", "/people", "/tasks"]);
+  redirect(to);
 }
 
 export async function changeStatusAction(entity: string, id: string, newStatus: string) {
